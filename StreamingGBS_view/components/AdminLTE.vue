@@ -1,0 +1,238 @@
+<template>
+  <div class="wrapper">
+    <NaviBar :logoText="serverInfo.LogoText" :logoMiniText="serverInfo.LogoMiniText" :versionText="versionText" @modify-password="$refs['modify-password-dlg'].show()"></NaviBar>
+    <Sider :menus="menus"></Sider>
+    <ModifyPasswordDlg ref="modify-password-dlg"></ModifyPasswordDlg>
+    <div class="content-wrapper">
+      <section class="content">
+        <router-view @play="play"></router-view>
+      </section>
+    </div>
+    <!-- <footer class="main-footer">
+      <div class="pull-right hidden-xs hide">
+        {{serverInfo.LogoText}}
+      </div>
+      <span v-html="serverInfo.CopyrightText"></span>
+    </footer> -->
+    <back-to-top text="返回顶部" class="hidden-xs"></back-to-top>
+    <resize-observer @notify="handleResize"/>
+  </div>
+</template>
+
+<script>
+import "font-awesome/css/font-awesome.css"
+import "bootstrap/dist/css/bootstrap.css"
+import "admin-lte/dist/css/AdminLTE.css"
+import "admin-lte/dist/css/skins/_all-skins.css"
+import "assets/styles/custom.less"
+import 'vue-resize/dist/vue-resize.css'
+
+import "bootstrap/dist/js/bootstrap.js"
+import "admin-lte/dist/js/adminlte.js"
+
+
+import { mapState, mapActions } from "vuex"
+import Vue from 'vue'
+import moment from 'moment'
+import Sider from 'components/Sider.vue'
+import NaviBar from 'components/NaviBar.vue'
+import ModifyPasswordDlg from 'components/ModifyPasswordDlg.vue'
+
+import ElementUI from "element-ui"
+import 'assets/styles/element-custom.scss'
+Vue.use(ElementUI);
+
+import VCharts from 'v-charts'
+Vue.use(VCharts);
+
+import VueClipboards from 'vue-clipboards';
+Vue.use(VueClipboards);
+
+import fullscreen from 'vue-fullscreen'
+Vue.use(fullscreen);
+
+import BackToTop from 'vue-backtotop'
+Vue.use(BackToTop);
+
+import VueResize from 'vue-resize'
+Vue.use(VueResize);
+
+import VeeValidate, { Validator } from "vee-validate";
+Vue.use(VeeValidate, {
+  fieldsBagName: 'veeFields'
+});
+import zh_CN from "vee-validate/dist/locale/zh_CN";
+Validator.localize("zh_CN", zh_CN);
+Vue.use(VeeValidate, {
+  locale: "zh_CN",
+  // delay: 500,
+  dictionary: {
+    zh_CN: {
+      messages: {
+        required: field => `${field} 不能为空`,
+        confirmed: (field, targetField) => `${field} 和 ${targetField} 不匹配`,
+        regex: field => `${field} 不符合要求格式`
+      }
+    }
+  }
+});
+Vue.prototype.$updateQueryString = (uri, key, value) => {
+    var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
+    var separator = uri.indexOf('?') !== -1 ? "&" : "?";
+    if (uri.match(re)) {
+        return uri.replace(re, '$1' + key + "=" + value + '$2');
+    } else {
+        return uri + separator + key + "=" + value;
+    }
+}
+Vue.prototype.$iframe = (link, w, h) => {
+    var _link = Vue.prototype.$updateQueryString(link, "aspect", `${w}x${h}`)
+    return `<iframe src="${_link}" width="${w}" height="${h}" allowfullscreen allow="autoplay; fullscreen"></iframe>`
+}
+Vue.prototype.isMobile = () => {
+  return videojs.browser.IS_IOS || videojs.browser.IS_ANDROID;
+}
+Vue.prototype.isIE = () => {
+  return !!videojs.browser.IE_VERSION;
+}
+Vue.prototype.flvSupported = () => {
+  return videojs.browser.IE_VERSION || (flvjs.getFeatureList() && flvjs.getFeatureList().mseLiveFlvPlayback);
+}
+Vue.prototype.canTalk = () => {
+  return location.protocol.indexOf("https") == 0 || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+}
+Vue.prototype.hasAnyRole = (buttons, userInfo, buttonid) => {
+    if (!userInfo) {
+        return true;
+    }
+    var checked = false;
+    for(var idx in buttons) {
+        if (buttons[idx] == buttonid) {
+            checked = true;
+            break;
+        }
+    }
+    return checked;
+}
+Vue.prototype.isDemoUser = (serverInfo, userInfo) => {
+  if (serverInfo && userInfo && serverInfo.IsDemo && userInfo.Name == serverInfo.DemoUser) return true;
+  return false;
+}
+
+import $ from "jquery"
+import "@penggy/jquery.nicescroll"
+$.ajaxSetup({ cache: false });
+export default {
+  data() {
+    return {
+      nice: null,
+    }
+  },
+  watch: {
+    serverInfo(val) {
+      if (val) {
+       document.title = val.LogoText || "StreamingGBS";
+      }
+    }
+  },
+  mounted() {
+      this.$nextTick(() => {
+        $("body").layout("fix");
+        this.fixHover();
+        if(!this.isIE() && !this.isMobile()) {
+          this.nice = $("body").niceScroll({
+              zindex: 999999,
+              cursorwidth: "10px",
+              cursoropacitymax: 0.5,
+              enablekeyboard: false,
+          });
+        }
+      });
+    // });
+    $("body").addClass(localStorage["sidebar-collapse"]);
+  },
+  components: {
+    NaviBar, Sider, ModifyPasswordDlg
+  },
+  computed: {
+    ...mapState([
+      "menus",
+      "userInfo",
+      "serverInfo",
+    ]),
+    versionText(){
+      var text = "";
+      if(this.serverInfo){
+        text = this.serverInfo.Server || ""
+      }
+      var matchs = text.match(/streamingGBS\/(.+?)\s/i);
+      if(matchs) {
+        return matchs[1];
+      }
+      return ""
+    }
+  },
+  methods: {
+    ...mapActions([
+      "getServerInfo"
+    ]),
+    fixHover() {
+        if(videojs.browser.IS_IOS||videojs.browser.IS_ANDROID) {
+            for(var sheetI = document.styleSheets.length - 1; sheetI >= 0; sheetI--) {
+                var sheet = document.styleSheets[sheetI];
+                if(sheet.cssRules) {
+                    for(var ruleI = sheet.cssRules.length - 1; ruleI >= 0; ruleI--) {
+                        var rule = sheet.cssRules[ruleI];
+                        if(rule.selectorText) {
+                            rule.selectorText = rule.selectorText.replace(":hover", ":active");
+                            rule.selectorText = rule.selectorText.replace(":focus", ":active");
+                        }
+                    }
+                }
+            }
+        }
+    },
+    handleResize() {
+      this.nice && this.nice.resize();
+    },
+    play(video){
+    },
+    thisYear() {
+      return moment().format('YYYY');
+    }
+  },
+  beforeRouteUpdate(to, from, next) {
+    $('.modal').modal('hide') // closes all active pop ups.
+    next();
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.content-wrapper, .right-side, .main-footer {
+  transition: none;
+}
+</style>
+
+<style lang="less">
+.vue-back-to-top {
+  background-color: transparent;
+  left: 30px;
+  bottom: 10px;
+}
+.sidebar-collapse .vue-back-to-top {
+  display: none;
+}
+.sidebar-collapse .main-sidebar .sidebar .el-menu-item span,
+ .sidebar-collapse .main-sidebar .sidebar .el-submenu span {
+  display: none;
+}
+.sidebar-collapse .main-sidebar .sidebar .el-submenu .el-submenu__icon-arrow{
+  right: 2px;
+}
+.sidebar-collapse .main-sidebar .sidebar .el-submenu .el-menu-item{
+  padding-left: 30px !important;
+}
+</style>
+
+
