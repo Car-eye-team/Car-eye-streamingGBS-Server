@@ -1,9 +1,19 @@
 # Car-eye-streamingGBS-View
 GB28181 管理平台代码，采用VUE框架，实现对设备监控，管理等功能
 
+# 功能一览
+
+##  设备管理
+
+##  设备监控
+
+##  视频回放和下载
+
+## 平台级联
 
 
-#streamingGBS demo 演示地址
+
+# streamingGBS demo 演示地址    
 www.streaming-vip.com:10088
 用户名：admin
 密码：123456
