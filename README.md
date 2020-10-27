@@ -2,7 +2,7 @@
 GB28181 管理平台代码，采用VUE框架，实现对设备监控，管理等功能
 
 # 功能一览
-
+![](https://gitee.com/careye_open_source_platform_group/car-eye-streaming-gbs-view/raw/main/View.png)
 ##  设备管理
 
 平台管理国标设备，可以手工或者excel导入设备数据。
