@@ -1,20 +1,25 @@
-# Car-eye-streamingGBS-View
+﻿# Car-eye-streamingGBS-View
 GB28181 管理平台代码，采用VUE框架，实现对设备监控，管理等功能
 
 # 功能一览
+
 ![](https://gitee.com/careye_open_source_platform_group/car-eye-streaming-gbs-view/raw/main/View.png)
+
 ##  设备管理
 
 平台管理国标设备，可以手工或者excel导入设备数据。
 
 ##  设备监控
 
+
 平台可以实时监控设备视频，支持对讲和报警查询，支持发送命令到设备
 控制云台，调整参数等
 ![](https://gitee.com/careye_open_source_platform_group/car-eye-streaming-gbs-view/raw/main/monitor.png)   
 
+
 ##  视频回放和下载
 StreamingGBS 具有回放视频和下载视频到本地的功能，视频流在云平台完成录制后通过服务器下载到本地。   
+
 
 ![](https://gitee.com/careye_open_source_platform_group/car-eye-streaming-gbs-view/raw/main/replay.png)   
 
@@ -28,7 +33,6 @@ StreamingGBS 本身可以作为下级平台运行，也可以作为上级平台�
 www.streaming-vip.com:10088   
 用户名：admin    
 密码：123456   
-
 
 
 # 联系我们
