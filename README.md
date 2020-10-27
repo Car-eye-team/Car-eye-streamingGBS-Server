@@ -11,14 +11,17 @@ GB28181 管理平台代码，采用VUE框架，实现对设备监控，管理等
 
 平台可以实时监控设备视频，支持对讲和报警查询，支持发送命令到设备
 控制云台，调整参数等
-
+![](https://gitee.com/careye_open_source_platform_group/car-eye-streaming-gbs-view/raw/main/monitor.png)   
 
 ##  视频回放和下载
-streamingGBS 具有
+StreamingGBS 具有回放视频和下载视频到本地的功能，视频流在云平台完成录制后通过服务器下载到本地。   
 
+![](https://gitee.com/careye_open_source_platform_group/car-eye-streaming-gbs-view/raw/main/monitor.png)   
 
-## 平台级联
+## 平台级联     
 
+StreamingGBS 本身可以作为下级平台运行，也可以作为上级平台运行。当做为最下级平台运行，他对应设备管理，作为
+级联层平台他可以用来管理所有下级平台的设备。上级平台可以配置多个。
 
 
 # streamingGBS demo 演示地址    
