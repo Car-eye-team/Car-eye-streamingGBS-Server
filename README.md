@@ -2,6 +2,7 @@
 GB28181 管理平台代码，采用VUE框架，实现对设备监控，管理等功能
 
 # 功能一览
+## 负载均衡
 
 ![](https://gitee.com/careye_open_source_platform_group/car-eye-streaming-gbs-view/raw/main/View.png)
 
@@ -21,7 +22,11 @@ GB28181 管理平台代码，采用VUE框架，实现对设备监控，管理等
 StreamingGBS 具有回放视频和下载视频到本地的功能，视频流在云平台完成录制后通过服务器下载到本地。   
 
 
-![](https://gitee.com/careye_open_source_platform_group/car-eye-streaming-gbs-view/raw/main/replay.png)   
+![](https://gitee.com/careye_open_source_platform_group/car-eye-streaming-gbs-view/raw/main/replay.png) 
+
+## 平台录像
+
+StreamingGBS 具有平台录像功能，用户可以定制录像计划，将视频录制到云上，并根据需要进行回放
 
 ## 平台级联     
 
