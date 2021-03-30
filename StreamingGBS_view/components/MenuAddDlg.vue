@@ -29,7 +29,7 @@
                     <el-option v-for="item in parentMenus" :key="item.id" :label="item.name" :value="item.id">
                     </el-option>
                 </el-select> -->
-                <SelectTree width="100%" id="input-parentmenuid" name="parentmenuid" v-model.trim="form.parentmenuid" :options="parentMenus" :props="{parent:'parentid',value:'menuid',label:'menuname',children:'children'}" v-validate="'required'"></SelectTree>
+                <SelectTree width="100%" class="form-control" id="input-parentmenuid" name="parentmenuid" v-model.trim="form.parentmenuid" :options="parentMenus" :props="{parent:'parentid',value:'menuid',label:'menuname',children:'children'}" v-validate="'required'"></SelectTree>
             </div>
         </div>
         <div :class="{'form-group': true, 'has-error': errors.has('menutype')}">

@@ -24,10 +24,10 @@
       ref="input"
       v-model="labelModel"
       id="ele-input-tree"
-      clearable
+      :clearable="!!labelModel"
       :style="`width: ${width}px`"
-      :class="{ 'rotate': showStatus }"
-      suffix-icon="el-icon-arrow-down"
+      :class="{ 'rotate': showStatus&&!labelModel }"
+      :suffix-icon="!labelModel?'el-icon-arrow-down':''"
       :placeholder="placeholder">
     </el-input>
   </el-popover>
@@ -206,14 +206,14 @@ export default {
     cursor: pointer;
     overflow: hidden;
     margin: -5px 0 0 -10px;
-    width: 106%;
+    width: 200px;
   }
   .el-input.el-input--suffix.rotate .el-input__suffix {
     transform: rotate(180deg);
   }
   .select-tree {
     max-height: 350px;
-    overflow-y: scroll;
+    overflow-y: auto;
   }
   /* 菜单滚动条 */
   .select-tree::-webkit-scrollbar {

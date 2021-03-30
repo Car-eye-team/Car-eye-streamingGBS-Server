@@ -1,25 +1,19 @@
 <template>
-  <div>
+  <div :style="boxHeight">
     <div class="box box-primary">
       <div class="box-header">
         <h4 class="text-primary text-center">菜单列表</h4>
       </div>
-      <div class="box-body">
+      <div class="box-body box-search">
         <form class="form-inline" autocomplete="off" spellcheck="false">
-          <div class="input-group input-group-sm" v-if="hasAnyRole(buttons, userInfo, '755845973078573056')">
-            <button type="button" class="btn btn-sm btn-primary" @click.prevent="$refs['menuAddDlg'].show()">
-              <i class="fa fa-plus"></i> 添加菜单
-            </button>
-          </div>
           <div class="form-group form-group-sm">
-            <span class="hidden-xs">&nbsp;&nbsp;</span>
             <label>搜索</label>
-            <input type="text" class="form-control" placeholder="关键字" v-model.trim="q" @keydown.enter.prevent ref="q">
+            <input type="text" class="form-control" placeholder="关键字" v-model.trim="q" @change="getMenuList" @keydown.enter.prevent ref="q">
           </div>
           <span class="hidden-xs">&nbsp;&nbsp;</span>
           <div class="form-group form-group-sm">
             <label>菜单类型</label>
-            <select class="form-control" v-model.trim="type">
+            <select class="form-control" v-model.trim="type" @change="getMenuList">
               <option value="">全部</option>
               <option value="0">菜单</option>
               <option value="1">按钮</option>
@@ -28,31 +22,25 @@
           <span class="hidden-xs">&nbsp;&nbsp;</span>
           <div class="form-group form-group-sm">
             <label>是否显示</label>
-            <select class="form-control" v-model.trim="online">
+            <select class="form-control" v-model.trim="online" @change="getMenuList">
               <option value="">全部</option>
               <option value="1">显示</option>
               <option value="0">隐藏</option>
             </select>
           </div>
+          <div class="form-group form-group-sm pull-right">
+            <div class="input-group input-group-sm" v-if="hasAnyRole(buttons, userInfo, '755845973078573056')">
+              <button type="button" class="btn btn-sm btn-primary" @click.prevent="$refs['menuAddDlg'].show()">
+                <i class="fa fa-plus"></i> 添加菜单
+              </button>
+            </div>
+          </div>
         </form>
         <br>
-        <div class="clearfix"></div>
-        <el-table :data="datas" stripe :default-sort="{prop: 'menuid', order: 'desc'}" @sort-change="sortChange">
-          <el-table-column prop="menuname" label="菜单名称" min-width="140" :formatter="formatName" sortable="custom">
+        <el-table class="my-table" height="100%" :data="datas" stripe :default-sort="{prop: 'menuid', order: 'desc'}" @sort-change="sortChange">
+          <el-table-column prop="menuname" label="菜单名称" min-width="140" :formatter="formatName" sortable="custom" show-overflow-tooltip>
             <template slot-scope="props">
               <span>{{props.row.menuname}}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" min-width="120" v-if="isMobile()">
-            <template slot-scope="props">
-                <div class="btn-group btn-group-xs">
-                    <button type="button" class="btn btn-warning" @click.prevent="editMenu(props.row)" v-if="hasAnyRole(buttons, userInfo, '755846052728406016')">
-                      <i class="fa fa-edit"></i> 编辑
-                    </button>
-                    <button type="button" class="btn btn-danger" @click.prevent="removeMenu(props.row)" v-if="hasAnyRole(buttons, userInfo, '755846117727535104')">
-                      <i class="fa fa-remove"></i> 删除
-                    </button>
-                </div>
             </template>
           </el-table-column>
           <el-table-column prop="parentmenuname" label="父级菜单名称" min-width="140" :formatter="formatName" show-overflow-tooltip></el-table-column>
@@ -77,9 +65,9 @@
             </template>
           </el-table-column>
           <el-table-column prop="menuaddr" label="菜单地址" min-width="140" :formatter="formatName" show-overflow-tooltip></el-table-column>
-          <el-table-column prop="createDate" label="创建时间" min-width="160" sortable="custom" :formatter="formatDate"></el-table-column>
+          <el-table-column prop="createDate" label="创建时间" min-width="160" sortable="custom" :formatter="formatDate" show-overflow-tooltip></el-table-column>
           <el-table-column prop="menuid" label="菜单ID" min-width="140" :formatter="formatName" sortable="custom" show-overflow-tooltip></el-table-column>
-          <el-table-column label="操作" min-width="120" fixed="right" v-if="!isMobile()">
+          <el-table-column label="操作" min-width="120" fixed="right">
             <template slot-scope="props">
                 <div class="btn-group btn-group-xs">
                     <button type="button" class="btn btn-warning" @click.prevent="editMenu(props.row)" v-if="hasAnyRole(buttons, userInfo, '755846052728406016')">
@@ -93,8 +81,8 @@
           </el-table-column>
         </el-table>
       </div>
-      <div class="box-footer" v-if="total > 0">
-        <el-pagination layout="total,prev,pager,next" :pager-count="5" class="pull-right" :total="total" :page-size.sync="pageSize" :current-page.sync="currentPage"></el-pagination>
+      <div class="box-footer">
+        <el-pagination layout="total,prev,pager,next" :pager-count="5" class="pull-right" :total="total" :page-size.sync="pageSize" :current-page.sync="currentPage" @current-change="getMenuList"></el-pagination>
       </div>
     </div>
     
@@ -113,6 +101,7 @@ export default {
   props: {},
   data() {
     return {
+      boxHeight: "height: 100%;",
       q: "",
       type: "",
       online: "",
@@ -122,8 +111,7 @@ export default {
       sort: "menuid",
       order: "desc",
       datas: [],
-      loading: false,
-      timer: 0
+      loading: false
     };
   },
   components: {
@@ -135,47 +123,35 @@ export default {
   mounted() {
     // this.$refs["q"].focus();
     this.getMenuList();
-    this.timer = setInterval(() => {
-        this.getMenuList();
-    }, 3000);
-  },
-  beforeDestroy() {
-    if (this.timer) {
-      clearInterval(this.timer);
-      this.timer = 0;
-    }
   },
   watch: {
-    q: function(newVal, oldVal) {
-      this.doDelaySearch();
-    },
-    type: function(newVal, oldVal) {
-      this.doSearch();
-    },
-    online: function(newVal, oldVal) {
-      this.doSearch();
-    },
-    currentPage: function(newVal, oldVal) {
-      this.doSearch(newVal);
-    },
+    // q: function(newVal, oldVal) {
+    //   this.doDelaySearch();
+    // },
+    // type: function(newVal, oldVal) {
+    //   this.doSearch();
+    // },
+    // online: function(newVal, oldVal) {
+    //   this.doSearch();
+    // },
+    // currentPage: function(newVal, oldVal) {
+    //   this.doSearch(newVal);
+    // },
   },
   methods: {
-    isMobile() {
-      return videojs.browser.IS_IOS || videojs.browser.IS_ANDROID;
-    },
-    doSearch(page = 1) {
-      var query = {};
-      if (this.q) query["q"] = this.q;
-      if (this.type) query["type"] = this.type;
-      if (this.online) query["online"] = this.online;
-      this.$router.replace({
-        path: `/menu/${page}`,
-        query: query
-      });
-    },
-    doDelaySearch: _.debounce(function() {
-      this.doSearch();
-    }, 500),
+    // doSearch(page = 1) {
+    //   var query = {};
+    //   if (this.q) query["q"] = this.q;
+    //   if (this.type) query["type"] = this.type;
+    //   if (this.online) query["online"] = this.online;
+    //   this.$router.replace({
+    //     path: `/menu/${page}`,
+    //     query: query
+    //   });
+    // },
+    // doDelaySearch: _.debounce(function() {
+    //   this.doSearch();
+    // }, 500),
     getMenuList() {
       this.loading = true;
       $.get(this.$store.state.baseUrl + "/menu/list", {
@@ -186,14 +162,15 @@ export default {
         limit: this.pageSize,
         sort: this.sort,
         order: this.order
-      })
-        .then(ret => {
-          this.total = ret.count;
-          this.datas = ret.data;
-        })
-        .always(() => {
-          this.loading = false;
-        });
+      }).then(ret => {
+        this.total = ret.count;
+        this.datas = ret.data;
+        if(this.isMobile()&&ret.data.length>0){
+          this.boxHeight = "height:calc(100% + "+ (ret.data.length*30+50) +"px);"
+        }
+      }).always(() => {
+        this.loading = false;
+      });
     },
     sortChange(data) {
       this.sort = data.prop;
@@ -250,31 +227,27 @@ export default {
       return "-";
     },
   },
-  beforeRouteEnter(to, from, next) {
-    next(vm => {
-      vm.q = to.query.q || "";
-      vm.type = to.query.type || "";
-      vm.online = to.query.online || "";
-      vm.currentPage = parseInt(to.params.page) || 1;
-    });
-  },
+  // beforeRouteEnter(to, from, next) {
+  //   next(vm => {
+  //     vm.q = to.query.q || "";
+  //     vm.type = to.query.type || "";
+  //     vm.online = to.query.online || "";
+  //     vm.currentPage = parseInt(to.params.page) || 1;
+  //   });
+  // },
   beforeRouteLeave(to, from, next) {
-    if (this.timer) {
-      clearInterval(this.timer);
-      this.timer = 0;
-    }
     next();
   },
   beforeRouteUpdate(to, from, next) {
     next();
-    this.$nextTick(() => {
-      this.q = to.query.q || "";
-      this.type = to.query.type || "";
-      this.online = to.query.online || "";
-      this.currentPage = parseInt(to.params.page) || 1;
-      this.datas = [];
-      this.getMenuList();
-    });
+    // this.$nextTick(() => {
+    //   this.q = to.query.q || "";
+    //   this.type = to.query.type || "";
+    //   this.online = to.query.online || "";
+    //   this.currentPage = parseInt(to.params.page) || 1;
+    //   this.datas = [];
+    //   this.getMenuList();
+    // });
   }
 };
 </script>

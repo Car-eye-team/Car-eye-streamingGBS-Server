@@ -1,7 +1,7 @@
 <template>
 <div class="qcontent">
     <div class="qcontent-header hidden-xs">服务器概览 <button type="button" class="btn btn-xs btn-default full-btn" @click.prevent="fullscreen" title="点击大屏展示"><i class="fa fa-arrows-alt"></i></button></div>
-    <div class="container-fluid" :style="`height:${this.pageHeight}px;min-height:500px;`">
+    <div class="container-fluid">
         <div class="col-xs-12 col-md-6">
             <div class="view-dashboard view-left">
                 <div class="panel">
@@ -50,7 +50,6 @@
 
 <script>
 import Vue from 'vue'
-import moment from "moment";
 import {
     mapState
 } from "vuex";
@@ -66,7 +65,6 @@ export default {
     data() {
         return {
             chartColors: ["#337ab7", "#7FFFD4"],
-            pageWidth: 0,
             pageHeight: 0,
             protocol: location.protocol,
             authViewHeight: 80,
@@ -136,10 +134,9 @@ export default {
                 }
             },
             authData: {
-                ChannelOnline: 10,
+                ChannelOnline: 0,
                 ChannelTotal: 100,
-                ChannelCount: 100,
-                DeviceOnline: 10,
+                DeviceOnline: 0,
                 DeviceTotal: 100,
             },
             bandwidthData: {
@@ -156,22 +153,17 @@ export default {
         };
     },
     mounted() {
-        // this.top();
-        // this.timer1 = setInterval(() => {
-        //     this.top();
-        // }, 2000);
-        // this.store();
-        // this.timer2 = setInterval(() => {
-        //     this.store();
-        // }, 5000);
+         this.top();
+         this.timer1 = setInterval(() => {
+             this.top();
+         }, 2000);
+        this.store();
+         this.timer2 = setInterval(() => {
+             this.store();
+        }, 5000);
+        $(".qcontent").css("height","calc(100% + 20px)");
         $(document).on('expanded.pushMenu', this.resizeCharts);
         $(document).on('collapsed.pushMenu', this.resizeCharts);
-    },
-    created() {
-        $(window).resize(() => {
-            this.resize();
-        });
-        this.initHeight();
     },
     beforeDestroy() {
         if (this.timer1) {
@@ -206,68 +198,30 @@ export default {
 
             $.get(this.$store.state.baseUrl + "/dashboard/auth").then(result => {
                 var data = result.data;
-                this.authData = data;
+                this.authData =  data;
             });
-        },
-        isIE() {
-            if (!!window.ActiveXObject || "ActiveXObject" in window)
-                return true;
-            else
-                return false;
-        },
-        initHeight() {
-            this.pageWidth = window.innerWidth;
-            this.pageHeight = window.innerHeight;
-            if (typeof this.pageWidth != "number") {
-                if (document.compatMode == "CSS1Compat") {
-                    this.pageWidth = document.documentElement.clientWidth;
-                    this.pageHeight = document.documentElement.clientHeight;
-                } else {
-                    this.pageWidth = document.body.clientWidth;
-                    this.pageHeight = document.body.clientHeight;
-                }
-            }
-            this.pageHeight = this.pageHeight - 140;
         },
         resizeCharts() {
             this.$refs["storeChart"].resize();
             this.$refs["cpuChart"].resize();
             this.$refs["memChart"].resize();
-        },
-        resize() {
-            var newPageWidth = window.innerWidth;
-            var newPageHeight = window.innerHeight;
-            if (typeof pageWidth != "number") {
-                if (document.compatMode == "CSS1Compat") {
-                    newPageWidth = document.documentElement.clientWidth;
-                    newPageHeight = document.documentElement.clientHeight;
-                } else {
-                    newPageWidth = document.body.clientWidth;
-                    newPageHeight = document.body.clientHeight;
-                }
-            }
-            if (newPageWidth != this.pageWidth || newPageHeight != this.pageHeight) {
-                this.pageWidth = newPageWidth;
-                this.pageHeight = newPageHeight;
-            }
-            if (this.pageHeight >= screen.height) {
-                $(".qcontent .container-fluid").css("height", this.pageHeight + "px");
-            } else {
-                $(".qcontent .container-fluid").css("height", (this.pageHeight - 140) + "px");
-            }
-            if (this.pageHeight > 800) {
-                $(".auth-view").css("padding-top", "16%")
-            } else if (this.pageHeight > 630) {
-                $(".auth-view").css("padding-top", "10%")
-            } else {
-                $(".auth-view").css("padding-top", "2%")
-            }
         }
     }
 };
 </script>
 
 <style lang="less" scoped>
+.content{
+    padding: 0;
+}
+.qcontent {
+    margin: -16px -15px;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
 .qcontent .fullscreen {
     position: fixed;
     left: 0;
@@ -286,6 +240,7 @@ export default {
     padding-left: 0px;
     padding-right: 0px;
     height: 100%;
+    min-height: 500px;
 }
 
 .qcontent .panel {
@@ -294,6 +249,7 @@ export default {
 
 .qcontent .panel-body {
     height: 100%;
+    box-sizing: border-box;
 }
 
 .qcontent .panel-title {
@@ -302,15 +258,12 @@ export default {
     font-size: 18px;
 }
 
-.qcontent .container-fluid {
-    padding-bottom: 20px;
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-top: 10px;
-}
-
-.qcontent {
-    margin: -16px -15px;
+.qcontent .container-fluid {flex-grow: 1;
+    min-height:500px;
+    box-sizing: border-box;
+    overflow: auto;
+    width: 100%;
+    padding: 10px 10px 0 10px;
 }
 
 .view-dashboard {
@@ -343,7 +296,12 @@ export default {
 
 .auth-view {
     min-height: 200px;
-    padding-top: 10%;
+    height: 95%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .auth-title {
@@ -356,7 +314,6 @@ export default {
 }
 
 @screen-md-min: 992px;
-
 @media (max-width: @screen-md-min) {
     .col-md-6 {
         width: 100%;
@@ -364,9 +321,9 @@ export default {
     .container-fluid {
         height: 100% !important;
     }
-
-    .view-dashboard {
-        height: 320px;
+    
+    .container-fluid > div:last-child {
+        margin-top: 10px;
     }
 
     .view-left {
@@ -392,15 +349,6 @@ export default {
         font-size: 14px;
         font-weight: bold;
         color: #337ab7;
-    }
-
-    .auth-view {
-        height: 200px !important;
-        padding-top: 78px !important;
-    }
-
-    .qcontent .container-fluid {
-        padding-bottom: 10px;
     }
 }
 </style>

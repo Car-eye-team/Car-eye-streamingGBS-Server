@@ -31,8 +31,6 @@
 </template>
 
 <script>
-import { mapState, mapActions } from "vuex";
-
 export default {
   props: {
     menus : {
@@ -44,11 +42,7 @@ export default {
       activeIndex: ''
     }
   },
-  computed: {
-     ...mapState(['userInfo', 'serverInfo'])
-  },
   methods: {
-    ...mapActions(["getServerInfo"]),
     clickMenuItem(index){
       this.activeIndex = index
     }

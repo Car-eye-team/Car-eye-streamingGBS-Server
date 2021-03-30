@@ -42,9 +42,6 @@ import ElementUI from "element-ui"
 import 'assets/styles/element-custom.scss'
 Vue.use(ElementUI);
 
-import VCharts from 'v-charts'
-Vue.use(VCharts);
-
 import VueClipboards from 'vue-clipboards';
 Vue.use(VueClipboards);
 
@@ -118,10 +115,49 @@ Vue.prototype.isDemoUser = (serverInfo, userInfo) => {
   if (serverInfo && userInfo && serverInfo.IsDemo && userInfo.Name == serverInfo.DemoUser) return true;
   return false;
 }
-
+Vue.prototype.pageBtnNum = Vue.prototype.isMobile()?3:5;//分页栏显示的数量
+Vue.prototype.formatTime = (date, fmt)=>{//时间格式过滤器
+  if(!date){
+    return "";
+  }
+	date = new Date(date);
+	// 返回处理后的值
+	if (/(y+)/.test(fmt)) {
+		fmt = fmt.replace(RegExp.$1, (date.getFullYear() + '').substr(4 - RegExp.$1.length))
+	}
+	let o = {
+		'M+': date.getMonth() + 1,
+		'd+': date.getDate(),
+		'h+': date.getHours(),
+		'H+': date.getHours(),
+		'm+': date.getMinutes(),
+		's+': date.getSeconds()
+	}
+	for (let k in o) {
+		if (new RegExp(`(${k})`).test(fmt)) {
+			let str = o[k] + ''
+			fmt = fmt.replace(RegExp.$1, (RegExp.$1.length === 1) ? str : ('00' + str).substr(str.length))
+		}
+	}
+	return fmt
+}
 import $ from "jquery"
 import "@penggy/jquery.nicescroll"
-$.ajaxSetup({ cache: false });
+
+import 'assets/css/base.css'
+
+$.ajaxSetup({ 
+  cache: false,
+  complete: function(xhr,status) {
+    if(status=="success"&&xhr.status==200&&xhr.responseJSON){
+      switch(xhr.responseJSON.code){
+        case(2000):
+          window.location.href = `/login.html`;
+          break;
+      }
+    }
+  }
+});
 export default {
   data() {
     return {
@@ -136,20 +172,24 @@ export default {
     }
   },
   mounted() {
-      this.$nextTick(() => {
-        $("body").layout("fix");
-        this.fixHover();
-        if(!this.isIE() && !this.isMobile()) {
-          this.nice = $("body").niceScroll({
-              zindex: 999999,
-              cursorwidth: "10px",
-              cursoropacitymax: 0.5,
-              enablekeyboard: false,
-          });
-        }
-      });
-    // });
+    this.getDeptOptions();
+    this.$nextTick(() => {
+      $("body").layout("fix");
+      this.fixHover();
+      this.handleResize();
+      // if(!this.isIE() && !this.isMobile()) {
+      //   this.nice = $(".content").niceScroll({
+      //       zindex: 999999,
+      //       cursorwidth: "10px",
+      //       cursoropacitymax: 0.5,
+      //       enablekeyboard: false,
+      //   });
+      // }
+    });
     $("body").addClass(localStorage["sidebar-collapse"]);
+    //验证浏览器无操作
+    this.validNoOperation();
+    this.getSomeParams();
   },
   components: {
     NaviBar, Sider, ModifyPasswordDlg
@@ -174,8 +214,33 @@ export default {
   },
   methods: {
     ...mapActions([
-      "getServerInfo"
+      "getDeptOptions","keepLogin","setKeepTime"
     ]),
+    getSomeParams(){
+      let self = this;
+      $.get(self.$store.state.baseUrl + "/keep", {}).then(ret => {
+        console.log(ret);
+        if(ret.code==0){
+          let keep = self.$store.state.keepTime;
+          if(ret.data){
+            ret.data = JSON.parse(ret.data);
+            if(ret.data.timeout){
+              ret.data.timeout = ret.data.timeout-60; 
+              self.setKeepTime(ret.data.timeout);
+              keep = ret.data.timeout;
+            }
+          }
+          let keepTime = keep*1000+new Date().getTime();
+          window.addEventListener("click", function(){
+            if(new Date().getTime()>=keepTime){
+              self.keepLogin().then(res=>{
+                keepTime = keep*1000+new Date().getTime();
+              });
+            }
+          });
+        }
+      })
+    },
     fixHover() {
         if(videojs.browser.IS_IOS||videojs.browser.IS_ANDROID) {
             for(var sheetI = document.styleSheets.length - 1; sheetI >= 0; sheetI--) {
@@ -193,12 +258,27 @@ export default {
         }
     },
     handleResize() {
-      this.nice && this.nice.resize();
+      $(".content-wrapper").css("height",$(".content-wrapper").css("min-height"));
+      // this.nice && this.nice.resize();
     },
     play(video){
     },
     thisYear() {
       return moment().format('YYYY');
+    },
+    validNoOperation(){
+      var showTime = 60 * 3;
+			var time = showTime;
+			$(document).on('click', function() {
+				time = showTime;
+			});
+			var interCount = setInterval(function() {
+				time--;
+				if(time == 0) {
+					clearInterval(interCount);
+					window.location.href = "/#/logout";
+				}
+      }, 10000)
     }
   },
   beforeRouteUpdate(to, from, next) {
@@ -209,6 +289,26 @@ export default {
 </script>
 
 <style lang="less" scoped>
+.wrapper{
+  height: 100%;
+  overflow: hidden;
+}
+.content-wrapper{
+  height: 100%;
+  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.content-wrapper .content{
+  box-sizing: border-box;
+  height: 100%;
+  overflow: auto;
+
+}
+
+
+
+
+
 .content-wrapper, .right-side, .main-footer {
   transition: none;
 }

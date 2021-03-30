@@ -31,8 +31,9 @@ export default {
     methods: {
         defForm() {
             return {
-                deviceId: '',
-                channelId: '',
+                //deviceId: '',
+                gb_id: '',
+                d_gb_id: '',
                 cmd: '',
             }
         },

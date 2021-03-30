@@ -1,11 +1,11 @@
 <template>
     <FormDlg title="编辑设备" @hide="onHide" @show="onShow" @submit="onSubmit" ref="dlg" :disabled="errors.any()">
-        <div :class="{'form-group':true,'has-error': errors.has('devicecode')}">
+        <div :class="{'form-group':true,'has-error': errors.has('gb_id')}">
             <label for="input-devicecode" class="col-sm-4 control-label">设备编码
                 <span class="text-red">*</span>
             </label>
             <div class="col-sm-7">
-                <input type="text" class="form-control" id="input-devicecode" name="devicecode" v-model.trim="form.devicecode" data-vv-as="设备编码" v-validate="'required'" @keydown.enter="$el.querySelector('#input-devicecode').focus()">
+                <input type="text" class="form-control" id="input-devicecode" name="gb_id" v-model.trim="form.gb_id" data-vv-as="设备编码" v-validate="'required'" @keydown.enter="$el.querySelector('#input-devicecode').focus()">
             </div>
         </div>
         <div :class="{'form-group':true,'has-error': errors.has('devicename')}">
@@ -21,7 +21,7 @@
                 <span class="text-red">*</span>
             </label>
             <div class="col-sm-7">
-                <SelectTree width="100%" id="input-deptid" name="deptid" v-model.trim="form.deptid" :options="this.$store.state.deptOptions" :props="{parent:'parentid',value:'deptid',label:'deptname',children:'children'}"></SelectTree>
+                <SelectTree width="100%" class="form-control" id="input-deptid" name="deptid" data-vv-as="组织机构" v-validate="'required'" v-model.trim="form.deptid" :options="this.$store.state.deptOptions" :props="{parent:'parentid',value:'deptid',label:'deptname',children:'children'}"></SelectTree>
             </div>
         </div>
         <div :class="{'form-group':true,'has-error': errors.has('devicetypeid')}">
@@ -29,7 +29,7 @@
                 <span class="text-red">*</span>
             </label>
             <div class="col-sm-7">
-                <el-select style="width:100%;" size="medium" v-model.trim="form.devicetypeid" placeholder="请选择" v-validate="'required'">
+                <el-select style="width:100%;" class="form-control" size="medium" v-model.trim="form.devicetypeid" placeholder="请选择" id="input-devicetypeid" name="devicetypeid" data-vv-as="设备类型" v-validate="'required'">
                     <el-option v-for="item in deviceTypes" :key="item.id" :label="item.name" :value="item.id">
                     </el-option>
                 </el-select>
@@ -60,7 +60,7 @@
             <label for="input-installTimeStr" class="col-sm-4 control-label">安装时间
             </label>
             <div class="col-sm-7">
-                <el-date-picker style="width:100%" id="input-installTimeStr" name="installTimeStr" v-model.trim="form.installTimeStr" data-vv-as="安装时间" type="date" placeholder="选择日期" value-format="yyyy-MM-dd"></el-date-picker>
+                <el-date-picker style="width:100%" class="form-control" id="input-installTimeStr" name="installTimeStr" v-model.trim="form.installTimeStr" data-vv-as="安装时间" type="date" placeholder="选择日期" value-format="yyyy-MM-dd"></el-date-picker>
             </div>
         </div>
         <div :class="{'form-group':true,'has-error': errors.has('location')}">
@@ -95,7 +95,7 @@ export default {
             return {
                 id: '',
                 deptid: '',
-                devicecode: '',
+                gb_id: '',
                 devicename: '',
                 channels: '',
                 devicetypeid: '',

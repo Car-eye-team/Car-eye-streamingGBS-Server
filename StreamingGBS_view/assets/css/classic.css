@@ -205,9 +205,8 @@
 }
 
 .pe-ui-classic .pe-poster img {
-    width: 10%;
-    height: 20%;
-    margin-top: 15%;
+    width: 100%;
+    height: 100%;
     vertical-align: middle;
 }
 
@@ -466,6 +465,10 @@
 .pe-ui-classic[state="playing"] .pe-controlbar .pe-button.pause,
 .pe-ui-classic[state="seeking"] .pe-controlbar .pe-button.pause,
 .pe-ui-classic[state="switching"] .pe-controlbar .pe-button.pause,
+.pe-ui-classic[state="waiting"] .pe-controlbar .pe-button.stop,
+.pe-ui-classic[state="playing"] .pe-controlbar .pe-button.stop,
+.pe-ui-classic[state="seeking"] .pe-controlbar .pe-button.stop,
+.pe-ui-classic[state="switching"] .pe-controlbar .pe-button.stop,
 .pe-ui-classic[muted="true"] .pe-controlbar .pe-button.unmute,
 .pe-ui-classic[danmu="off"] .pe-controlbar .pe-button.danmuon,
 .pe-ui-classic[fullpage="true"] .pe-controlbar .pe-button.exitfullpage,
@@ -502,7 +505,6 @@
     width: 26px;
     height: 40px;
 }
-
 .pe-ui-classic .pe-controlbar .pe-button.stop {
     background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAfUlEQVQ4T2NkoBJgpJI5DCgGvXr1yuDv37/8xBjOzMz8UUxM7AJMLdwgkCF//vw5T4whMDUsLCyGMMPgBj1//tzh////+0kxiJGR0VFSUvIASM+oQdhDbjSMCKco2oYROVkEq4tAHoFmWgHCnoKogGUPlCxCrGZc6qhWHgEATUBvE9w5bHsAAAAASUVORK5CYII=);
 }

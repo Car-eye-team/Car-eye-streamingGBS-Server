@@ -18,15 +18,15 @@
       :default-expand-all="isExpand"
       @node-click="onClickNode">
     </el-tree>
-    <el-input
+    <el-input 
       slot="reference"
       ref="input"
       v-model="labelModel"
       id="ele-input-tree"
-      clearable
-      :style="`width: ${width}px`"
-      :class="{ 'rotate': showStatus }"
-      suffix-icon="el-icon-arrow-down"
+      :clearable="!!labelModel" 
+      :style="`width: ${width}px;`"
+      :class="{ 'rotate': showStatus&&!labelModel }"
+      :suffix-icon="!labelModel?'el-icon-arrow-down':''" 
       :placeholder="placeholder">
     </el-input>
   </el-popover>
@@ -210,7 +210,7 @@ export default {
   }
   .select-tree {
     max-height: 350px;
-    overflow-y: scroll;
+    overflow-y: auto;
   }
   /* 菜单滚动条 */
   .select-tree::-webkit-scrollbar {

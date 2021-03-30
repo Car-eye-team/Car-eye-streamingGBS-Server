@@ -16,12 +16,12 @@
                 <input type="text" class="form-control" id="input-deptname" name="deptname" v-model.trim="form.deptname" data-vv-as="机构名称" v-validate="'required'" @keydown.enter="$el.querySelector('#input-deptname').focus()">
             </div>
         </div>
-        <div :class="{'form-group':true,'has-error': errors.has('code')}">
+        <div :class="{'form-group':true,'has-error': errors.has('gb_id')}">
             <label for="input-code" class="col-sm-4 control-label">机构编码
                 <span class="text-red">*</span>
             </label>
             <div class="col-sm-7">
-                <input type="text" class="form-control" id="input-code" name="code" v-model.trim="form.code" placeholder="" data-vv-as="机构编码" v-validate="'required'" @keydown.enter="$el.querySelector('#input-code').focus()">
+                <input type="text" class="form-control" id="input-code" name="gb_id" v-model.trim="form.gb_id" placeholder="" data-vv-as="机构编码" v-validate="'required'" @keydown.enter="$el.querySelector('#input-code').focus()">
             </div>
         </div>
         <div :class="{'form-group':true,'has-error': errors.has('depClass')}">
@@ -81,7 +81,7 @@ export default {
                 deptid: '',
                 parentid: '',
                 deptname: '',
-                code: '',
+                gb_id: '',
                 depClass: '',
                 contract: '',
                 tel: '',

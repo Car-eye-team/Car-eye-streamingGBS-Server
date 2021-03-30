@@ -1,82 +1,104 @@
 <template>
-    <div>
-        <div class="col-xs-4 col-sm-4 col-md-4 col-lg-3">
-            <!--show-checkbox-->
-            <div id="tab-tree-wrapper">
-
-                    <el-tree ref="devTree" class="flow-tree" id="dev-tree" node-key="key" v-if="showTree" :props="treeProps"
-                             :load="treeLoad" :style="`${isMobile() ? 'max-height:200px' : 'max-height:800px'};min-height:200px;overflow:auto;max-width:400px;margin:auto;`"
-                             :filter-node-method="treeFilter" lazy
-                             @node-click="treeNodeClick" @node-contextmenu="treeNodeRightClick" >
-                      <span class="custom-tree-node" slot-scope="{node, data}">
-                        <span> <!--:class="{'text-green': data.subCount === 0||data.channels===0}"'fa-taxi': typeof data.devicename != 'undefined'&&data.online===1-->
-                          <i :class="['fa', {'fa-sitemap':typeof data.parentid != 'undefined'&&typeof data.channelname == 'undefined',
-                            'fa-camera channeloffline': typeof data.channelname != 'undefined'&&data.status===0,'fa-camera channelonline': typeof data.channelname != 'undefined'&&data.status===1}]"></i>
-                            <span class="ellipsis" :title="node.label">{{node.label}}</span>
-                        </span>
-                      </span>
-                    </el-tree>
-            </div>
-            <VueContextMenu class="right-menu" :target="contextMenuTarget" :show="contextMenuVisible"
-                            @update:show="(show) => contextMenuVisible = show">
-                <a href="javascript:;" @click="playAll" v-show="popup==1" style="color: #000000;">
-                    <i class="fa fa-caret-square-o-right"></i>预览全部
-                </a>
-                <a href="javascript:;" @click="voiceintercom" style="color: #000000;" v-show="popup==2">
-                    <i class="fa fa-microphone"></i> 开启对讲
-                </a>
-                <a href="javascript:;" @click="setYuntai" style="color: #000000;" v-show="popup==2">
-                    <i class="fa fa-mixcloud"></i> 云台设置
-                </a>
-                <a href="javascript:;" @click="gbControl" style="color: #000000;" v-show="popup==2">
-                    <i class="fa fa-hand-o-right"></i> 设备控制
-                </a>
-            </VueContextMenu>
-
-        </div>
-        <div class="col-xs-8 col-sm-8 col-md-8 col-lg-9">
-            <div class="col-xs-12 text-left">
-                <ul>
-                    <li class="btnmenuli" v-for="list in playerBtnGroup" :key="list.num"
-                        @click.prevent="setPlayerLength(list.num)">
-                        <img class="btnmenulist" :src="list.img"/>
-                    </li>
-
-                    <li class="btnmenuli" @click="isshowstop">
-                        <img class="btnmenulist" src="../assets/images/closebtn.png"/>
-                        <VueContextMenu class="right-menu" :show="showstop">
-                            <a href="javascript:;" @click="stopAll" style="color: #000000;">
-                                <!--<i class="fa fa-stop-circle"></i>-->
-                                关闭所有视频
-                            </a>
-                        </VueContextMenu>
-                    </li>
-                </ul>
-            </div>
-            <div class="view-list row">
-                <div class="video-show col-xs-12 col-sm-12 col-md-12 col-lg-12" style="padding-right:3px;">
-                    <!--<div class="no-margin no-padding video" v-for="(player,index) in players" :key="index"-->
-                    <!--id="{{index}}"-->
-                    <!--@mousemove="resetCloseTimer(player)" @touchstart="resetCloseTimer(player)"-->
-                    <!--:class="{'col-sm-12': playerLength == 1,'col-sm-6': playerLength == 2,'col-sm-6': playerLength == 4,'col-sm-4': playerLength == 9,'col-sm-3': playerLength == 16,'col-smxx-5': playerLength == 25,'col-sm-2': playerLength == 36,'col-smxx-8': playerLength == 64}">-->
-
-                    <!--</div>-->
-                    <div id="car-eye-player">
-                    </div>
-                </div>
-            </div>
-
-        </div>
-        <LiveYuntai ref="liveYuntai" id="liveyuntai"></LiveYuntai>
-        <VoiceInterCom ref="voiceInterCom" id="voiceintercom"></VoiceInterCom>
-        <LiveGbControl ref="liveGbControl" id="liveGbControl"></LiveGbControl>
+  <div class="the-box" id="thebox">
+    <div class="col-lg-3 col-md-3 depttree" id="depttree">
+      <div class="tree-box" id="tab-tree-wrapper">
+        <el-tree ref="devTree" class="flow-tree outbox" id="dev-tree" node-key="key" :props="treeProps" :load="treeLoad"
+          style="overflow:auto;margin:auto;" :filter-node-method="treeFilter" lazy :default-expanded-keys="defaultExpandedKeys"
+          @node-click="treeNodeClick" @node-contextmenu="treeNodeRightClick">
+            <span class="custom-tree-node" slot-scope="{node, data}">
+              <span> <!--:class="{'text-green': data.subCount === 0||data.channels===0}"'fa-taxi': typeof data.devicename != 'undefined'&&data.online===1-->
+                <i :class="['fa', {'fa-sitemap':typeof data.parentid != 'undefined'&&typeof data.channelname == 'undefined',
+                  'fa-server': data.device && typeof data.channelname == 'undefined',
+                  'fa-camera channeloffline':typeof data.channelname != 'undefined' && data.status === 0 && !data.type,
+                  'fa-camera channelonline':typeof data.channelname != 'undefined' && data.status === 1 && !data.type,
+                  'fa-volume-off channeloffline':typeof data.channelname != 'undefined' && data.status === 0 && data.type===1,
+                  'fa-volume-off channelonline':typeof data.channelname != 'undefined' && data.status === 1 && data.type===1,
+                  'fa-exclamation-triangle channeloffline':typeof data.channelname != 'undefined' && data.status === 0 && data.type===2,
+                  'fa-exclamation-triangle channelonline':typeof data.channelname != 'undefined' && data.status === 1 && data.type===2,
+                  'fa-microphone channeloffline':typeof data.channelname != 'undefined' && data.status === 0 && data.type===3,
+                  'fa-microphone channelonline':typeof data.channelname != 'undefined' && data.status === 1 && data.type===3}]"></i>
+                <span class="ellipsis" :title="node.label">{{node.label}}</span>
+              </span>
+            </span>
+        </el-tree>
+      </div>
+      <div class="select">
+        <div class="_label">是否录像</div>
+        <el-select class="_value" id="input-record" name="record" size="small" v-model.trim="record" placeholder="1" v-validate="'required'">
+          <el-option class="options marleft" v-for="(item, index) in recordListLive" :key="index" :value="item.value" :label="item.label"></el-option>
+        </el-select>
+      </div>
+      <VueContextMenu class="right-menu" :target="contextMenuTarget" :show="contextMenuVisible" @update:show="(show) => contextMenuVisible = show">
+        <a href="javascript:;" @click="playAll" v-show="popup==1" style="color: #000000;">
+          <i class="fa fa-caret-square-o-right"></i>预览全部
+        </a>
+        <a href="javascript:;" @click="refresh()" v-show="popup==1" style="color: #000000;">
+          <i class="fa fa-refresh"></i>刷新状态
+        </a>
+        <a href="javascript:;" @click="refresh()" v-show="popup==3" style="color: #000000;">
+          <i class="fa fa-refresh"></i>刷新状态
+        </a>
+        <!--<a href="javascript:;" @click="stopAll" style="color: #000000;" v-show="popup==1">-->
+        <!--<i class="fa fa-hand-o-right"></i> 关闭全部-->
+        <!--</a>-->
+        <a href="javascript:;" @click="playOne()" style="color: #000000;" v-show="popup==2">
+          <i class="fa fa-camera"></i> 通道预览
+        </a>
+        <a href="javascript:;" @click="voiceintercom" style="color: #000000;" v-show="popup==2">
+          <i class="fa fa-microphone"></i> 开启对讲
+        </a>
+        <a href="javascript:;" @click="setYuntai" style="color: #000000;" v-show="popup==2">
+          <i class="fa fa-mixcloud"></i> 云台设置
+        </a>
+        <a href="javascript:;" @click="gbControl" style="color: #000000;" v-show="popup==2">
+          <i class="fa fa-hand-o-right"></i> 设备控制
+        </a>
+      </VueContextMenu>
     </div>
+    <div class="col-lg-9 col-md-9 screenbox" id="playDiv">
+      <div class="tool">
+        <ul>
+          <li class="btnmenuli" v-for="list in playerBtnGroup" :key="list.num" @click.prevent="setPlayerLength(list.num)" :style="{'display':isMobile()?'block':'none'}">
+            <img class="btnmenulist" :src="list.img" :style="{'display':list.num==1&isMobile()||list.num==4&isMobile()?'block':'none'}"/>
+          </li>
+          <li class="btnmenuli" v-for="list in playerBtnGroup" :key="list.num" @click.prevent="setPlayerLength(list.num)" :style="{'display':!isMobile()?'block':'none'}">
+            <img class="btnmenulist" :src="list.img"/>
+            <div class="btnmenuli-tip">分{{list.num}}屏</div>
+          </li>
+          <li class="btnmenuli" @click="isshowstop" v-if="isMobile()">
+            <img class="btnmenulist" src="../assets/images/closebtn.png"/>
+            <VueContextMenu class="right-menu" :show="showstop">
+              <a href="javascript:;" @click="stopAll" style="color: #000000;">
+                <!--<i class="fa fa-stop-circle"></i>-->
+                关闭所有视频
+              </a>
+            </VueContextMenu>
+          </li>
+          <li class="btnmenuli" @click="stopAll" v-else>
+            <img class="btnmenulist" src="../assets/images/closebtn.png"/>
+            <div class="btnmenuli-tip tostop">关闭所有视频</div>
+          </li>
+        </ul>
+      </div>
+      <div class="view-list" id="list-box">
+        <div class="video-show" id="car-eye-player">
+        </div>
+      </div>
+    </div>
+    <LiveYuntai ref="liveYuntai" id="liveyuntai"></LiveYuntai>
+    <VoiceInterCom ref="voiceInterCom" id="voiceintercom"></VoiceInterCom>
+    <LiveGbControl ref="liveGbControl" id="liveGbControl"></LiveGbControl>
+  </div>
 </template>
 <script>
     import $ from "jquery";
     import "assets/css/classic.css";
     import "assets/css/style.css";
-    import {component as VueContextMenu} from '@xunlei/vue-context-menu' // var lastnum = "";
+    import {
+      mapState,
+      mapActions
+    } from "vuex"
+    import {component as VueContextMenu} from '@xunlei/vue-context-menu'
     import LiveYuntai from 'components/LiveYuntai.vue'
     import LiveGbControl from 'components/LiveGbControl.vue'
     import VoiceInterCom from 'components/VoiceInterCom.vue'
@@ -89,829 +111,722 @@
     import con36 from "../assets/images/36.png";
     import con64 from "../assets/images/64.png";
     import logo from "../assets/images/logo.png";
-    import  fastClick from 'fastclick'
+    import fastClick from 'fastclick';
+
     fastClick.attach(document.body);
-    // var lastnum = "";
     export default {
-        components: {VueContextMenu, LiveYuntai, VoiceInterCom,LiveGbControl},
-        data() {
-            return {
-                players: [],
-                playerLength: this.isMobile() ? 2 : 4,
-                protocol: "",
-                lastnum: 0,
-                q: "",
-                online: "",
-                total: 0,
-                pageSize: 10,
-                currentPage: 1,
-                sort: "id",
-                order: "desc",
-                showTree: true,
-                nodedeviceid: null,
-                nodechannelcode: null,
-                nodeprotocol: null,
-                nodechannelname: null,
-                vedioType: 0,
-                popup: 0,
-                contextMenuTarget: null,
-                contextMenuVisible: false,
-                contextMenuNodeData: null,
-                playerindex: 0,
-                treeClickCount: 0,
-                channelcount: 0,
-                showstop: false,
-                terminals: new Array(),
-                logoimg: logo,
-                treeProps: {
-                    label: (data, node) => {
-                        var label = "";
-                        if (node.level === 1) {
-                            // 第一层lable为src_name字
-                            node.deptid = data.deptid;
-                            node.deptname = data.deptname;
-                            label = data.deptname;
-                            label += ` [${Number(data.subCount) + Number(data.subDeviceCount)}]`;
-
-
-                        } else {
-                            if (typeof data.devicename != "undefined") {
-                                node.id = data.id;
-                                node.devicename = data.devicename;
-                                node.channelcount = data.channels;
-                                node.status = data.status;
-                                label = data.deptname;
-                                if (data.channels > 0) {
-                                    label += ` [${data.channels}]`;
-                                }
-                            } else if (typeof data.channelname != "undefined") {
-                                node.channelcode = data.channelcode;
-                                node.channelname = data.channelname;
-                                node.deviceId = data.deviceid;
-                                node.status = data.status;
-                                label = data.deptname;
-                            } else {
-                                node.deptid = data.deptid;
-                                node.deptname = data.deptname;
-                                label = data.deptname;
-                                if (Number(data.subCount) + Number(data.subDeviceCount) > 0) {
-                                    label += ` [${data.subCount + data.subDeviceCount}]`;
-                                }
-                            }
-                        }
-
-
-                        return label;
-                    },
-                    isLeaf: (data, node) => {
-                        // return false;
-                        // console.log(data);
-                        if (typeof data.channelname != "undefined") {
-                            return true;
-                        } else {
-                            if (typeof data.devicename != "undefined") {
-                                return data.channels == 0;
-
-                            } else {
-                                return (Number(data.subCount) + Number(data.subDeviceCount)) == 0;
-                            }
-                        }
-
-                    },
-                    disabled:
-                        (data, node) => {
-                            return false;
-                        }
+      components: {VueContextMenu, LiveYuntai, VoiceInterCom, LiveGbControl},
+      data() {
+        return {
+          playerLength: this.isMobile() ? 1 : 4,
+          lastnum: 0,
+          protocol: "",
+          nodedeviceid: null,
+          nodechannelcode: null,
+          nodechannelid: null,
+          nodechannelstatus: null,
+          nodeprotocol: null,
+          nodechannelname: null,
+          vedioType: 0,
+          popup: 0,
+          contextMenuTarget: null,
+          contextMenuVisible: false,
+          contextMenuNodeData: null,
+          treeClickCount: 0,
+          d_gb_id: '',
+          channelcount: 0,
+          showstop: false,
+          terminals: new Array(),//用于存放播放中的设备信息[{deviceid,id,gb_id,channelname,status,index}...]
+          logoimg: logo,
+          defaultExpandedKeys: [],
+          record: 0,
+          recordListLive: [{value: 1,label: '是'},{value: 0,label: '否'}],
+          treeProps: {
+            label: (data, node) => {
+              var label = "";
+              if (node.level === 1) {
+                // 第一层lable为src_name字
+                node.deptid = data.deptid;
+                node.deptname = data.deptname;
+                label = data.deptname;
+                label += ` [${Number(data.subCount) + Number(data.subDeviceCount)}]`;
+              } else {
+                if (typeof data.devicename != "undefined") {
+                  node.id = data.id;
+                  node.devicename = data.devicename;
+                  node.channelcount = data.channels;
+                  node.status = data.status;
+                  label = data.deptname;
+                  if (data.channels > 0) {
+                    label += ` [${data.channels}]`;
+                  }
+                } else if (typeof data.channelname != "undefined") {
+                  node.d_gb_id = data.d_gb_id;
+                  node.gb_id = data.gb_id;
+                  node.channelname = data.channelname;
+                  node.deviceId = data.deviceid;
+                  node.status = data.status;
+                  label = data.deptname;
+                } else {
+                  node.deptid = data.deptid;
+                  node.deptname = data.deptname;
+                  label = data.deptname;
+                  if (Number(data.subCount) + Number(data.subDeviceCount) > 0) {
+                    label += ` [${data.subCount + data.subDeviceCount}]`;
+                  }
                 }
+              }
+              return label;
+            },
+            isLeaf: (data, node) => {
+              if (typeof data.channelname != "undefined") {
+                return true;
+              } else {
+                if (typeof data.devicename != "undefined") {
+                  return data.channels == 0;
+                } else {
+                  return (Number(data.subCount) + Number(data.subDeviceCount)) == 0;
+                }
+              }
+            },
+            disabled: (data, node) => {
+              return false;
             }
-                ;
-
+          },
+          keepSiv: null,
+          currentStopIndex: null
+        };
+      },
+      computed: {
+        playerBtnGroup() {
+          var list = [{
+            num: 1,
+            img: con1
+          }, {
+            num: 2,
+            img: con2
+          }, {
+            num: 4,
+            img: con4
+          }, {
+            num: 9,
+            img: con9
+          }, {
+            num: 16,
+            img: con16
+          }, {
+            num: 25,
+            img: con25
+          }, {
+            num: 36,
+            img: con36
+          }, {
+            num: 64,
+            img: con64
+          }];
+          return list;
         }
-        ,
-        computed: {
-            //     mapState(["userInfo", "serverInfo"]),
-            playerBtnGroup() {
-                var list = [{
-                    num: 1,
-                    img: con1
-                }, {
-                    num: 2,
-                    img: con2
-                }, {
-                    num: 4,
-                    img: con4
-                }, {
-                    num: 9,
-                    img: con9
-                }, {
-                    num: 16,
-                    img: con16
-                }, {
-                    num: 25,
-                    img: con25
-                }, {
-                    num: 36,
-                    img: con36
-                }, {
-                    num: 64,
-                    img: con64
-                }];
-
-                return list;
+      },
+      mounted() {
+        // var eleheight = (window.innerHeight * 0.55).toFixed(2) + "px";
+        // $("#dev-tree").css("max-height", eleheight);
+        if (this.isMobile()) {//屏幕跟树的位置互换
+          // $("#depttree").after($("#playDiv"));
+          this.$el.querySelector("#depttree").before(this.$el.querySelector("#playDiv"));
+          $("#thebox").addClass("ismobile");
+        }
+        this.contextMenuTarget = document.querySelector('#tab-tree-wrapper');
+        $("#car-eye-player").html("");
+        for (var i = 0; i < 64; i++) {//<a onclick='choseplayer("+i+")'></a>
+          $("#car-eye-player").append("<div class='col-smxx-8' id='player" + i + "' style='display:none;'></div>");
+          this.playerrestart("", "player" + i, i);
+          $("#player" + i).find("div.pe-logo").remove();
+        }
+        this.setPlayerLength(this.playerLength);
+        let that = this;
+        $("#car-eye-player .pe-controlbar").find(".pe-button.stop").click(function(e){
+          console.log("我监听到了播放器的停止按钮了",e);
+          that.stopPlayApi(that.currentStopIndex);
+        })
+      },
+      methods: {
+        ...mapActions([
+          "keepLogin"
+        ]),
+        playerrestart(fileurl, playerid, val) {//初始化播放器，只调用一次
+          var container = document.getElementById(playerid);
+          var ui = playease.ui(val);
+          this.terminals.push({
+            index: val
+          });
+          ui.setup(container, {
+            autoplay: false,
+            bufferLength: 2.5,       // sec.
+            // level: 'error',    // debug, log, warn, error
+            file: fileurl,
+            lowlatency: false,//false为服务器的点播功能
+            maxBufferLength: 3.0,    // sec.
+            maxRetries: 0,
+            mode: "live", //live
+            module: 'FLV',
+            objectfit: "fill",
+            retrying: 3000,
+            loader: {
+              name: 'auto',
+              mode: 'cors',        // cors, no-cors, same-origin
+              credentials: 'omit', // omit, include, same-origin
+            },
+            service: {
+              script: 'js/sw.js',
+              scope: 'js/',
+              enable: false,
+            },
+            plugins: [
+              {
+                kind: 'Poster',
+                file: this.logoimg,
+                objectfit: 'contain', // fill, contain, cover, none, scale-down
+                visibility: true
+              },{
+                kind: 'Display',
+                layout: '',
+                ondouBleclick: 'fullscreen',
+                visibility: true
+              },{
+                kind: 'Controlbar',
+                layout: '||[Slider:timebar=Preview]|[Button:play=播放][Button:pause=暂停][Button:stop=停止][Button:reload=重新加载][Button:capture=拍照][Button:mute=静音][Button:unmute=取消静音][Slider:volumebar=80][Button:fullscreen=全屏][Button:exitfullscreen=退出全屏]',
+                autohide: false,
+                visibility: true,
+              },{
+                kind: 'ContextMenu',
+                visibility: false,
+                items: [{
+                  mode: '',
+                  icon: 'image/github.png',
+                  text: 'studease',
+                  shortcut: '',
+                  handler: function () {}
+                }]
+              }
+            ]
+          });
+          ui.removeEventListener('error');
+          ui.addEventListener('error', console.error);
+          let that = this;
+          ui.removeEventListener('screenshot');
+          ui.addEventListener('screenshot', function(e){
+            let arr = e.data.image.split(',');
+            let ret = arr[0].match(/^data:(image\/(.+));base64$/);
+            if (ret === null) {
+              console.error('The string did not match the expected pattern.');
+              return;
             }
-        }
-        ,
-        mounted() {
-            //this.getDeptOptions();
-            // this.getDeviceList();
-            this.contextMenuTarget = document.querySelector('#tab-tree-wrapper');
-            $("#car-eye-player").html("");
-            for (var i = 0; i < 64; i++) {//<a onclick='choseplayer("+i+")'></a>
-                $("#car-eye-player").append("<div class='col-smxx-8' id='player" + i + "' style='display:none;'></div>");
-                this.playerrestart("", "player" + i, i);
-                $("#player"+i).find("div.pe-logo").remove();
-
+            let link = document.createElement('a');
+            link.href = e.data.image;
+            link.download = that.terminals[e.api].channelname+'.' + ret[2];
+            link.click();
+          });
+          ui.removeEventListener('ended');
+          ui.addEventListener('ended',function(res) {
+            console.log(res)
+            that.currentStopIndex = res.api;
+          });
+        },
+        setPlayerLength(playerNum) {//布局分屏
+          if (this.isMobile()) {
+            if (playerNum > 4) {
+              this.$message({
+                type: 'error',
+                message: "手机端最多支持四个同时播放！"
+              })
+              return;
             }
-            this.setPlayerLength(this.playerLength);
-        }
-        ,
-        methods: {
-            phonetouch(data){
+          }
+          if (playerNum == this.lastnum) {
+            return;
+          }
+          for (var i = 0; i < playerNum; i++) {
+            $("#player" + i).removeAttr("style");
+            if (playerNum == 1) {
+              $("#player" + i).attr("class", "col-sm-12 col-xs-12 col-md-12 col-lg-12");
+              $("#player" + i).css("height", "100%");
+            } else if (playerNum == 2) {
+              $("#player" + i).attr("class", "col-sm-6 col-xs-6 col-md-6 col-lg-6");
+              $("#player" + i).css("height", "100%");
+            } else if (playerNum == 4) {
+              $("#player" + i).attr("class", "col-sm-6 col-xs-6 col-md-6 col-lg-6");
+              $("#player" + i).css("height", "50%");
+            } else if (playerNum == 9) {
+              $("#player" + i).attr("class", "col-sm-4 col-xs-4 col-md-4 col-lg-4");
+              $("#player" + i).css("height", "33.33333%");
+            } else if (playerNum == 16) {
+              $("#player" + i).attr("class", "col-sm-3 col-xs-3 col-md-3 col-lg-3");
+              $("#player" + i).css("height", "25%");
+            } else if (playerNum == 25) {
+              $("#player" + i).attr("class", "col-smxx-5");
+              $("#player" + i).css("height", "20%");
+            } else if (playerNum == 36) {
+              $("#player" + i).attr("class", "col-sm-2 col-xs-2 col-md-2 col-lg-2");
+              $("#player" + i).css("height", "16.666667%");
+            } else if (playerNum == 64) {
+              $("#player" + i).attr("class", "col-smxx-8");
+              $("#player" + i).css("height", "12.5%");
+            }
+            $("#player" + i).find("div.pe-poster").css("height", "20%");
+            $("#player" + i).find("div.pe-poster").css("margin-top", "22%");
+            $("#player" + i).find("div.pe-poster").css("width", "15%");
+            $("#player" + i).find("div.pe-poster").css("margin-left", "42%");
+            $("#player" + i).find("div.pe-poster").css("vertical-align", "middle");
+          }
+          for (let i = playerNum; i < 64; i++) {
+            $("#player" + i).css("display", "none");
+          }
+          this.lastnum = playerNum;
+          this.playerLength = playerNum;
+        },
+        isshowstop() {//关闭所有视频按钮的显示隐藏
+          if (this.showstop) {
+            this.showstop = false;
+          } else {
+            this.showstop = true;
+          }
+        },
+        playAll() {//预览该车辆下的全部摄像头
+          var self = this;
+          $.get(self.$store.state.baseUrl + "/deviceChannelInfo/list", {//获取该车辆下的全部摄像头
+            deviceid: self.nodedeviceid,
+            q: "",
+            online: "",
+            sort: "id",
+            order: "asc"
+          }).then(ret => {
+            var channellist = [];
+            let maxI = self.playerLength;
+            for (let i = 0; i < ret.data.length; i++) {//过滤掉非视频通道   0：代表视频通道  1：代表语音输出通道 2 代表报警通道 3：语音输入通道  4：其他
+              if(!ret.data[i].type){
+                channellist.push(ret.data[i]);
+                let screenIdx = self.terminals.findIndex(_=>_.gb_id===ret.data[i].gb_id &&_.d_gb_id===ret.data[i].d_gb_id);
+                if(screenIdx==-1){//代表这个通道不在播放中
+                  let _i = self.terminals.findIndex(_=>!_.gb_id);//获取最靠前的未使用窗口
+                  maxI = _i;
+                  if(_i==-1){
+                    break;
+                  }
+                  let temp = {
+                    deviceid: ret.data[i].deviceid,
+                    id: ret.data[i].id,
+                    gb_id: ret.data[i].gb_id,
+                    d_gb_id: ret.data[i].d_gb_id,
+                    channelname: ret.data[i].channelname,
+                    status: ret.data[i].status
+                  };
+                  Object.assign(self.terminals[_i],temp);
+                }
+              }
+            }
+            if(maxI==-1){//已经达到了最大数量
+              self.$message({
+                type: 'error',
+                message: "播放已达到最大数量！"
+              })
+              return;
+            }
+            if(maxI>=self.playerLength){//代表目前展示的窗口数不够用，需要多加窗口
+              if (maxI <= 1) {
+                self.setPlayerLength(2);
+              } else if (maxI <= 2) {
+                self.setPlayerLength(4);
+              } else if (maxI <= 4 && !self.isMobile()) {
+                self.setPlayerLength(9);
+              } else if (maxI <= 9 && !self.isMobile()) {
+                self.setPlayerLength(16);
+              } else if (maxI <= 16 && !self.isMobile()) {
+                self.setPlayerLength(25);
+              } else if (maxI <= 25 && !self.isMobile()) {
+                self.setPlayerLength(36);
+              } else if (maxI <= 36 && !self.isMobile()) {
+                self.setPlayerLength(64);
+              }
+            }
+            for (var z = 0; z < channellist.length; z++) {
+              let screenIdx = self.terminals.findIndex(_=>_.gb_id===channellist[z].gb_id && _.d_gb_id===channellist[z].d_gb_id);
+              if (self.isMobile()&&screenIdx >= 4) {
                 this.$message({
-                    type: 'success',
-                    message: JSON.stringify(data)
+                  type: 'error',
+                  message: "手机端最多支持四个同时播放！"
                 })
-            },
-            isshowstop() {
-                if (this.showstop) {
-                    this.showstop = false;
-                } else {
-                    this.showstop = true;
+                return;
+              }
+              $.ajax({
+                url: self.$store.state.baseUrl + "/play",
+                data: {
+                  d_gb_id: channellist[z].d_gb_id,
+                  gb_id: channellist[z].gb_id,
+                  vedioType: 0,
+                  record: self.record
+                },
+                type: "get",
+                async: false,
+                contentType: 'application/json;charset=utf-8',
+                success: function (data) {
+                  let ui2 = playease.ui(self.terminals[screenIdx].index);
+                  ui2.stop();
+                  setTimeout(function(){
+                    ui2.play(data);
+                  },1000);
+                  $("#player" + self.terminals[screenIdx].index).find("div#souga").remove();
+                  let souga = "<div id='souga' style='padding-left:10px;float: left;position: absolute; color:#FFFFFF;margin-top:-3.5%;font-size: 1vh;'>" + self.terminals[screenIdx].channelname + "</div>";
+                  $("#player" + self.terminals[screenIdx].index).find("div.pe-controlbar").append(souga);
+                  if(!self.keepSiv){//保持登录
+                    let keepIn = self.$store.state.keepTime;
+                    self.keepSiv = setInterval(function(){
+                      keepIn--;
+                      if(keepIn<=0){
+                        self.keepLogin().then(res=>{keepIn = self.$store.state.keepTime;});
+                      }
+                    },1000);
+                  }
                 }
-            },
-            playAll() {
-                var self = this;
-                $.get(self.$store.state.baseUrl + "/deviceChannelInfo/list", {
-                    deviceid: self.nodedeviceid,
-                    q: "",
-                    online: "",
+              });
+            }
+          })
+        },
+        playOne() {//播放
+          let self = this;
+          let screenIdx = self.terminals.findIndex(_=>!_.gb_id);//找到未使用的窗口
+          if(screenIdx==-1){//已经达到了最大数量
+            self.$message({
+              type: 'error',
+              message: "播放已达到最大数量！"
+            })
+            return;
+          }
+          if(screenIdx>=self.playerLength){//代表目前展示的窗口数不够用，需要多加窗口
+            if (screenIdx <= 1) {
+              self.setPlayerLength(2);
+            } else if (screenIdx <= 2) {
+              self.setPlayerLength(4);
+            } else if (screenIdx <= 4 && !self.isMobile()) {
+              self.setPlayerLength(9);
+            } else if (screenIdx <= 9 && !self.isMobile()) {
+              self.setPlayerLength(16);
+            } else if (screenIdx <= 16 && !self.isMobile()) {
+              self.setPlayerLength(25);
+            } else if (screenIdx <= 25 && !self.isMobile()) {
+              self.setPlayerLength(36);
+            } else if (screenIdx <= 36 && !self.isMobile()) {
+              self.setPlayerLength(64);
+            }
+          }
+          if (self.isMobile()&&screenIdx >= 4) {
+            self.$message({
+              type: 'error',
+              message: "手机端最多支持四个同时播放！"
+            })
+            return;
+          }
+          let _i = self.terminals.findIndex(_=>_.gb_id===self.nodechannelcode&&_.d_gb_id===self.d_gb_id);
+          if(_i==-1){//新的
+            let temp = {
+              deviceid: self.nodedeviceid,
+              id: self.nodechannelid,
+              gb_id: self.nodechannelcode,
+              d_gb_id: self.d_gb_id,
+              channelname: self.nodechannelname,
+              status: self.nodechannelstatus
+            };
+            Object.assign(self.terminals[screenIdx],temp);
+          }else{//已经在播放中
+            screenIdx = _i;
+          }
+          $.get(self.$store.state.baseUrl + "/play", {
+            d_gb_id: self.d_gb_id,
+            gb_id: self.nodechannelcode,
+            vedioType: self.vedioType,
+            record: self.record
+          }).then(ret => {
+            self.contextMenuVisible = false;
+            let ui2 = playease.ui(self.terminals[screenIdx].index);
+            ui2.stop();
+            setTimeout(function(){
+              ui2.play(ret);
+            },1000);
+            $("#player" + self.terminals[screenIdx].index).find("div#souga").remove();
+            let souga = "<div id='souga' style='padding-left:10px;float: left;position: absolute; color:#FFFFFF;margin-top:-3.5%;font-size: 1vh;'>" + self.terminals[screenIdx].channelname + "</div>";
+            $("#player" + self.terminals[screenIdx].index).find("div.pe-controlbar").append(souga);
+            if(!self.keepSiv){//保持登录
+              let keepIn = self.$store.state.keepTime;
+              self.keepSiv = setInterval(function(){
+                keepIn--;
+                if(keepIn<=0){
+                  self.keepLogin().then(res=>{keepIn = self.$store.state.keepTime;});
+                }
+              },1000);
+            }
+          })
+        },
+        stopPlayApi(index){//调用停止播放接口
+          let that = this;
+          $("#player" + that.terminals[index].index).find("div#souga").remove();
+          $.get(that.$store.state.baseUrl + "/playControl", {
+            d_gb_id: that.terminals[index].d_gb_id,
+            gb_id: that.terminals[index].gb_id,
+            command: 0
+          }).then(ret => {});
+          that.terminals[index] = {index: index};
+        },
+        stopAll() {//停止全部
+          var self = this;
+          if(!!self.keepSiv){
+            clearInterval(self.keepSiv);
+            self.keepSiv = null;
+          }
+          for (let i = 0; i < self.terminals.length; i++) {
+            if(!!self.terminals[i].gb_id){
+              playease.ui(self.terminals[i].index).stop();
+              self.stopPlayApi(self.terminals[i].index);
+            }
+          }
+        },
+        refresh(){//右键刷新
+          let that = this;
+          let node = that.$refs.devTree.getNode(that.contextMenuNodeData.key); // 通过节点id找到对应树节点对象
+          node.loaded = false;
+          node.expand(); // 主动调用展开节点方法，重新查询该节点下的所有子节点
+        },
+        treeNodeClick(data, node, c) {//点击树的节点
+          if (this.isMobile()) {
+            if (typeof data.channelname != "undefined") {
+              this.nodedeviceid = node.deviceId;
+              this.d_gb_id = node.d_gb_id;
+              this.nodechannelcode = node.gb_id;
+              this.nodechannelname = node.channelname;
+              this.nodechannelid = node.id;
+              this.nodechannelstatus = node.status;
+              this.playOne();
+            }
+          } else {
+            this.treeClickCount++;
+            //单次点击次数超过2次不作处理,直接返回,也可以拓展成多击事件
+            //计时器,计算300毫秒为单位,可自行修改
+            this.timer = window.setTimeout(() => {
+              if (this.treeClickCount > 1) {
+                //把次数归零
+                this.treeClickCount = 0;
+                if (typeof data.channelname != "undefined") {
+                  this.nodedeviceid = node.deviceId;
+                  this.d_gb_id = node.d_gb_id;
+                  this.nodechannelcode = node.gb_id;
+                  this.nodechannelname = node.channelname;
+                  this.nodechannelid = node.id;
+                  this.nodechannelstatus = node.status;
+                  this.playOne();
+                }
+              } else {
+                this.treeClickCount = 0;
+              }
+            }, 300);
+          }
+        },
+        treeNodeRightClick(event, data, node, c) {//树右键菜单
+          this.contextMenuNodeData = node;
+          if (typeof data.channelname != "undefined") {//右键通道
+            this.nodedeviceid = node.deviceId;
+            this.nodechannelcode = node.gb_id;
+            this.d_gb_id = node.d_gb_id;
+            this.nodechannelname = node.channelname;
+            this.nodechannelid = node.id;
+            this.nodechannelstatus = node.status;
+            this.popup = 2;
+            var new_event = new MouseEvent(event.type, event);
+            this.contextMenuTarget.dispatchEvent(new_event);
+          } else if (typeof data.devicename != "undefined") {//右键设备
+            this.nodedeviceid = node.id;
+            this.channelcount = node.channelcount;
+            this.popup = 1;
+            if (node.channelcount == 0) {
+              return;
+            }
+            var new_event = new MouseEvent(event.type, event);
+            this.contextMenuTarget.dispatchEvent(new_event);
+          } else {//右键机构
+            this.popup = 3;
+            var new_event = new MouseEvent(event.type, event);
+            this.contextMenuTarget.dispatchEvent(new_event);
+          }
+        },
+        setYuntai() {
+          var self = this;
+          self.$refs["liveYuntai"].show({
+            deviceId: self.nodedeviceid,
+            d_gb_id: self.d_gb_id,
+            channelId: self.nodechannelcode
+          });
+        },
+        gbControl() {
+          var self = this;
+          self.$refs["liveGbControl"].show({
+            d_gb_id: self.d_gb_id,
+            gb_id: self.nodechannelcode
+          });
+        },
+        voiceintercom() {
+          var self = this;
+          self.$refs["voiceInterCom"].show({
+            d_gb_id: self.d_gb_id,
+            deviceId: self.nodedeviceid,
+            channelId: self.nodechannelcode,
+          });
+        },
+        treeLoad(data, resolve) {
+          var self = this;
+          var parentid = "";
+          if (typeof data.devicename == "undefined") {
+            parentid = data.deptid || "-1";
+            var deptlist = [];
+            if (typeof data.channelname == "undefined") {
+              $.ajax({
+                url: self.$store.state.baseUrl + "/dept/getChildDeptList", // 请求路径
+                data: {
+                  parentid: parentid,
+                }, // 参数
+                type: "get", // 请求类型
+                async: false,
+                contentType: 'application/json;charset=utf-8',
+                error: function (request, textStatus, errorThrown) { // 设置表单提交出错
+                },
+                success: function (ret) {
+                  deptlist = ret.data;
+                  if (parentid == "-1") {
+                    self.defaultExpandedKeys = deptlist.length?[deptlist[0].deptid]:[]
+                    resolve((deptlist || []).map(v => {
+                      return Object.assign(v, {
+                        key: v.deptid,
+                      })
+                    }));
+                  }
+                }
+              });
+              if (parentid != "-1") {
+                $.ajax({
+                  url: self.$store.state.baseUrl + "/deviceInfo/list", // 请求路径
+                  data: {
+                    deptid: parentid,
                     sort: "id",
-                    order: "asc"
-                }).then(ret => {
-                    var channellist = ret.data;
-                    for (var z = 0; z < channellist.length; z++) {
-                        var url = "";
-                        var deviceidd = channellist[z].deviceid;
-                        var channelidd = channellist[z].channelcode;
-                        var channenamee = channellist[z].channelname;
-                        // await this.hbJson();
-                        var isaddterminls = 0;
-                        var terminalslist = self.terminals;
-                        var playerindexx = self.playerindex;
-                        $.ajax({
-                            url: self.$store.state.baseUrl + "/play", // 请求路径
-                            data: {
-                                deviceId: deviceidd,
-                                channelId: channelidd,
-                                vedioType: 0
-                            }, // 参数
-                            type: "get", // 请求类型
-                            async: false,
-                            contentType: 'application/json;charset=utf-8',
-                            error: function (request, textStatus, errorThrown) { // 设置表单提交出错
-
-                            },
-                            success: function (data) {
-                                url = data;
-                                // url = "ws://www.car-eye.cn:4025/ws?port=10077&app=live&stream=34020000001310000001_GB28181";
-                                if (terminalslist != null && terminalslist.length > 0) {
-                                    var playerindex = null;
-                                    $.each(terminalslist, function (i, j) {
-                                        // 发送停止播放的命令
-                                        var param = j.split("_");
-                                        // closePlay(param[0], param[1], 1, param[3]);
-                                        if (param[1] == channelidd) {
-                                            playerindex = param[2];
-                                            return;
-                                        }
-                                    });
-                                    if (playerindex != null) {
-                                        var ui2 = playease.ui(playerindex);
-                                        ui2.stop();
-                                        ui2.play(url);
-                                    } else {
-                                        if (self.isMobile()) {
-                                            if (self.playerindex >= 2) {
-                                                this.$message({
-                                                    type: 'error',
-                                                    message: "手机端最多支持二个同时播放！"
-                                                })
-                                                return;
-                                            }
-                                        }
-
-
-                                        if (self.playerLength == self.playerindex) {
-                                            if (self.playerLength == 1) {
-                                                self.setPlayerLength(2);
-                                            } else if (self.playerLength == 2) {
-                                                self.setPlayerLength(4);
-                                            } else if (self.playerLength == 4) {
-                                                self.setPlayerLength(9);
-                                            } else if (self.playerLength == 9) {
-                                                self.setPlayerLength(16);
-                                            } else if (self.playerLength == 16) {
-                                                self.setPlayerLength(25);
-                                            } else if (self.playerLength == 25) {
-                                                self.setPlayerLength(36);
-                                            } else if (self.playerLength == 36) {
-                                                self.setPlayerLength(64);
-                                            } else if (self.playerLength == 64) {
-                                                return;
-                                            }
-                                        }
-                                        isaddterminls = 1
-                                        var ui3 = playease.ui(playerindexx);
-                                        ui3.play(url);
-
-                                        $("#player" + playerindexx).find("div#souga").remove();
-
-                                        $("#player" + playerindexx).find("div.pe-controlbar").append("<div id='souga' style='float: left;position: absolute; color:#FFFFFF;margin-top:-3.5%;font-size: 1vh;'>" + channenamee
-                                            + "</div>"
-                                        );
-                                        playerindexx = playerindexx + 1;
-                                    }
-
-                                } else {
-                                    if (self.isMobile()) {
-                                        if (self.playerindex >= 2) {
-                                            this.$message({
-                                                type: 'error',
-                                                message: "手机端最多支持二个同时播放！"
-                                            })
-                                            return;
-                                        }
-                                    }
-                                    if (self.playerLength == self.playerindex) {
-                                        if (self.playerLength == 1) {
-                                            self.setPlayerLength(2);
-                                        } else if (self.playerLength == 2) {
-                                            self.setPlayerLength(4);
-                                        } else if (self.playerLength == 4) {
-                                            self.setPlayerLength(9);
-                                        } else if (self.playerLength == 9) {
-                                            self.setPlayerLength(16);
-                                        } else if (self.playerLength == 16) {
-                                            self.setPlayerLength(25);
-                                        } else if (self.playerLength == 25) {
-                                            self.setPlayerLength(36);
-                                        } else if (self.playerLength == 36) {
-                                            self.setPlayerLength(64);
-                                        } else if (self.playerLength == 64) {
-                                            return;
-                                        }
-                                    }
-                                    isaddterminls = 1;
-                                    var ui3 = playease.ui(playerindexx);
-                                    ui3.play(url);
-
-                                    $("#player" + playerindexx).find("div.pe-controlbar").append("<div id='souga' style='float: left;position: absolute; color:#FFFFFF;margin-top:-3.5%;font-size: 1vh;'>" + channenamee
-                                        + "</div>"
-                                    );
-                                    playerindexx = playerindexx + 1;
-
-                                }
-
-                            }
-                        });
-                        if (isaddterminls == 1) {
-                            self.playerindex = self.playerindex + 1;
-                            var xyindex = self.playerindex - 1;
-                            self.terminals.push(deviceidd + "_" + channelidd + "_" + xyindex);
-                            for (var i = 0; i < self.lastnum; i++) {
-                                $("#player" + i).height($("#player" + xyindex).height());
-                            }
-                        }
-
-                    }
-
-                })
-            },
-            setYuntai() {
-                var self = this;
-                self.$refs["liveYuntai"].show({
-                    deviceId: self.nodedeviceid,
-                    channelId: self.nodechannelcode
-                });
-            },
-            gbControl() {
-                var self = this;
-                self.$refs["liveGbControl"].show({
-                    deviceId: self.nodedeviceid,
-                    channelId: self.nodechannelcode
-                });
-            },
-            voiceintercom() {
-                var self = this;
-                self.$refs["voiceInterCom"].show({
-                    deviceId: self.nodedeviceid,
-                    channelId: self.nodechannelcode
-                });
-            },
-            playOne() {
-                $.get(this.$store.state.baseUrl + "/play", {
-                    deviceId: this.nodedeviceid,
-                    channelId: this.nodechannelcode,
-                    vedioType: this.vedioType
-                }).then(ret => {
-                    this.startplay(ret)
-                })
-            },
-            startplay(url) {
-                var channelidd = this.nodechannelcode;
-                if (null != this.terminals && this.terminals.length > 0) {
-                    var playerindex = null;
-                    $.each(this.terminals, function (i, j) {
-                        // 发送停止播放的命令
-                        var param = j.split("_");
-                        // closePlay(param[0], param[1], 1, param[3]);
-                        if (param[1] == channelidd) {
-                            playerindex = param[2];
-                            return;
-                        }
-                    });
-                    if (playerindex != null) {
-                        var ui2 = playease.ui(playerindex);
-                        ui2.stop();
-                        ui2.play(url);
+                    order: "asc",
+                  }, // 参数
+                  type: "get", // 请求类型
+                  async: false,
+                  contentType: 'application/json;charset=utf-8',
+                  error: function (request, textStatus, errorThrown) { // 设置表单提交出错
+                  },
+                  success: function (rett) {
+                    var devicelist = rett.data;
+                    // alert(JSON.stringify(rett.data));
+                    if (devicelist != null) {
+                      for (var i = 0; i < devicelist.length; i++) {
+                        devicelist[i].parentid = devicelist[i].deptid;
+                        devicelist[i].deptname = devicelist[i].devicename;
+                        devicelist[i].deptid = Math.round(Math.random() * 999)
+                          + Math.round(Math.random() * 999);
+                      }
+                      if (deptlist != null) {
+                        deptlist = deptlist.concat(devicelist);
+                        resolve((deptlist || []).map(v => {
+                          return Object.assign(v, {
+                            key: v.deptid,
+                          })
+                        }));
+                      } else {
+                        resolve((devicelist || []).map(v => {
+                          return Object.assign(v, {
+                            key: v.deptid,
+                          })
+                        }));
+                      }
                     } else {
-                        if (this.isMobile()) {
-                            if (this.playerindex >= 2) {
-                                this.$message({
-                                    type: 'error',
-                                    message: "手机端最多支持二个同时播放！"
-                                })
-                                return;
-                            }
-                        }
-                        if (this.playerLength == this.playerindex) {
-                            if (this.playerLength == 1) {
-                                this.setPlayerLength(2);
-                            } else if (this.playerLength == 2) {
-                                this.setPlayerLength(4);
-                            } else if (this.playerLength == 4) {
-                                this.setPlayerLength(9);
-                            } else if (this.playerLength == 9) {
-                                this.setPlayerLength(16);
-                            } else if (this.playerLength == 16) {
-                                this.setPlayerLength(25);
-                            } else if (this.playerLength == 25) {
-                                this.setPlayerLength(36);
-                            } else if (this.playerLength == 36) {
-                                this.setPlayerLength(64);
-                            } else if (this.playerLength == 64) {
-                                return;
-                            }
-                        }
-                        this.terminals.push(this.nodedeviceid + "_" + this.nodechannelcode + "_" + this.playerindex);
-                        var ui3 = playease.ui(this.playerindex);
-                        ui3.play(url);
-
-                        $("#player" + this.playerindex).find("div#souga").remove();
-
-                        $("#player" + this.playerindex).find("div.pe-controlbar").append("<div id='souga' style='float: left;position: absolute; color:#FFFFFF;margin-top:-3.5%;font-size: 1vh;'>" + this.nodechannelname
-                            + "</div>"
-                        );
-                        this.playerindex = this.playerindex + 1;
-                    }
-
-                } else {
-                    if (this.isMobile()) {
-                        if (this.playerindex >= 2) {
-                            this.$message({
-                                type: 'error',
-                                message: "手机端最多支持二个同时播放！"
-                            })
-                            return;
-                        }
-                    }
-                    if (this.playerLength == this.playerindex) {
-                        if (this.playerLength == 1) {
-                            this.setPlayerLength(2);
-                        } else if (this.playerLength == 2) {
-                            this.setPlayerLength(4);
-                        } else if (this.playerLength == 4) {
-                            this.setPlayerLength(9);
-                        } else if (this.playerLength == 9) {
-                            this.setPlayerLength(16);
-                        } else if (this.playerLength == 16) {
-                            this.setPlayerLength(25);
-                        } else if (this.playerLength == 25) {
-                            this.setPlayerLength(36);
-                        } else if (this.playerLength == 36) {
-                            this.setPlayerLength(64);
-                        } else if (this.playerLength == 64) {
-                            return;
-                        }
-                    }
-                    this.terminals.push(this.nodedeviceid + "_" + this.nodechannelcode + "_" + this.playerindex);
-                    var ui3 = playease.ui(this.playerindex);
-                    ui3.play(url);
-
-                    $("#player" + this.playerindex).find("div.pe-controlbar").append("<div id='souga' style='float: left;position: absolute; color:#FFFFFF;margin-top:-3.5%;font-size: 1vh;'>" + this.nodechannelname
-                        + "</div>"
-                    );
-                    this.playerindex = this.playerindex + 1;
-                }
-
-
-                // alert($("#player" + this.playerindex).height());
-                for (var i = 0; i < this.lastnum; i++) {
-                    $("#player" + i).height($("#player" + this.playerindex).height());
-                }
-
-            },
-            stopAll() {
-                // this.showstop = false;
-                var self = this;
-                if (null != self.terminals && self.terminals.length > 0) {
-                    $.each(self.terminals, function (i, j) {
-                        // 发送停止播放的命令
-                        var param = j.split("_");
-                        // closePlay(param[0], param[1], 1, param[3]);
-                        var ui3 = playease.ui(param[2]);
-                        ui3.stop();
-                        $("#player" + param[2]).find("div#souga").remove();
-                        $.get(self.$store.state.baseUrl + "/playControl", {
-                            deviceId: param[0],
-                            channelId: param[1],
-                            command: 0
-                        }).then(ret => {
-
+                      resolve((deptlist || []).map(v => {
+                        return Object.assign(v, {
+                          key: v.deptid,
                         })
-                        // $.ajax({
-                        //     url: self.$store.state.baseUrl + "/playControl", // 请求路径
-                        //     data: {
-                        //         deviceId: param[0],
-                        //         channelId: param[1],
-                        //         command: 0
-                        //     }, // 参数
-                        //     type: "POST", // 请求类型
-                        //     async: false,
-                        //     contentType: 'application/json;charset=utf-8',
-                        //     error: function (request, textStatus, errorThrown) { // 设置表单提交出错
-                        //
-                        //     },
-                        //     success: function (data) {
-                        //
-                        //
-                        //     }
-                        // });
-                    });
-                }
-                self.terminals = new Array();
-                self.playerindex = 0;
-            },
-            treeNodeClick(data, node, c) {
-
-                // if(this.isMobile()){
-                //     if (typeof data.channelname != "undefined") {
-                //         this.nodedeviceid = node.deviceId;
-                //         this.nodechannelcode = node.channelcode;
-                //         this.nodechannelname = node.channelname;
-                //         this.playOne();
-                //     }
-                // }else{
-                this.treeClickCount++;
-                //单次点击次数超过2次不作处理,直接返回,也可以拓展成多击事件
-
-                //计时器,计算300毫秒为单位,可自行修改
-                this.timer = window.setTimeout(() => {
-                    // if (this.treeClickCount == 1) {
-                    //     //把次数归零
-                    //     this.treeClickCount = 0;
-                    //     //单击事件处理
-                    //     this.console('单击事件,可在此处理对应逻辑')
-                    //
-                    // } else
-                    if (this.treeClickCount > 1) {
-                        //把次数归零
-                        this.treeClickCount = 0;
-                        if (typeof data.channelname != "undefined") {
-                            this.nodedeviceid = node.deviceId;
-                            this.nodechannelcode = node.channelcode;
-                            this.nodechannelname = node.channelname;
-                            this.playOne();
-                        }
-                    } else {
-                        this.treeClickCount = 0;
+                      }));
                     }
-                }, 300);
-                // }
-            }
-            ,
-            treeNodeRightClick(event, data, node, c) {
-                if (typeof data.channelname == "undefined" && typeof data.devicename == "undefined") {
-                    return;
-                } else {
-                    if (typeof data.channelname != "undefined") {
-                        this.nodedeviceid = node.id;
-                        this.nodechannelcode = node.channelcode;
-                        this.nodechannelname = node.channelname;
-                        this.popup = 2;
-                    } else if (typeof data.devicename != "undefined") {
-                        this.nodedeviceid = node.id;
-                        this.channelcount = node.channelcount;
-                        this.popup = 1;
-                        if (node.channelcount == 0) {
-                            return;
-                        }
-                    }
-
-                    var new_event = new MouseEvent(event.type, event);
-                    this.contextMenuTarget.dispatchEvent(new_event);
-                }
-
-            }
-            ,
-            treeLoad(data, resolve) {
-                var self = this;
-                // console.log(data);
-                var parentid = "";
-                if (typeof data.devicename == "undefined") {
-                    parentid = data.deptid || "-1";
-                    var deptlist = [];
-                    if (typeof data.channelname == "undefined") {
-                        $.ajax({
-                            url: self.$store.state.baseUrl + "/dept/getChildDeptList", // 请求路径
-                            data: {
-                                parentid: parentid,
-                            }, // 参数
-                            type: "get", // 请求类型
-                            async: false,
-                            contentType: 'application/json;charset=utf-8',
-                            error: function (request, textStatus, errorThrown) { // 设置表单提交出错
-
-                            },
-                            success: function (ret) {
-                                deptlist = ret.data;
-                                if (parentid == "-1") {
-                                    resolve((deptlist || []).map(v => {
-                                        return Object.assign(v, {
-                                            key: v.deptid,
-                                        })
-                                    }));
-                                }
-                            }
-                        });
-
-                        if (parentid != "-1") {
-                            $.ajax({
-                                url: self.$store.state.baseUrl + "/deviceInfo/list", // 请求路径
-                                data: {
-                                    deptid: parentid,
-                                    sort: "id",
-                                    order: "asc",
-                                }, // 参数
-                                type: "get", // 请求类型
-                                async: false,
-                                contentType: 'application/json;charset=utf-8',
-                                error: function (request, textStatus, errorThrown) { // 设置表单提交出错
-
-                                },
-                                success: function (rett) {
-                                    var devicelist = rett.data;
-                                    // alert(JSON.stringify(rett.data));
-                                    if (devicelist != null) {
-                                        for (var i = 0; i < devicelist.length; i++) {
-
-                                            devicelist[i].parentid = devicelist[i].deptid;
-                                            devicelist[i].deptname = devicelist[i].devicename;
-                                            devicelist[i].deptid = Math.round(Math.random() * 999)
-                                                + Math.round(Math.random() * 999);
-                                        }
-                                        if (deptlist != null) {
-                                            deptlist = deptlist.concat(devicelist);
-
-                                            resolve((deptlist || []).map(v => {
-                                                return Object.assign(v, {
-                                                    key: v.deptid,
-                                                })
-                                            }));
-                                        } else {
-                                            resolve((devicelist || []).map(v => {
-                                                return Object.assign(v, {
-                                                    key: v.deptid,
-                                                })
-                                            }));
-                                        }
-                                    } else {
-                                        resolve((deptlist || []).map(v => {
-                                            return Object.assign(v, {
-                                                key: v.deptid,
-                                            })
-                                        }));
-                                    }
-                                }
-                            });
-
-                        }
-
-                    }
-
-                } else {
-                    parentid = data.id;
-                    $.ajax({
-                        url: self.$store.state.baseUrl + "/deviceChannelInfo/list", // 请求路径
-                        data: {
-                            deviceid: parentid,
-                            sort: "id",
-                            order: "asc",
-                        }, // 参数
-                        type: "get", // 请求类型
-                        async: false,
-                        contentType: 'application/json;charset=utf-8',
-                        error: function (request, textStatus, errorThrown) { // 设置表单提交出错
-
-                        },
-                        success: function (ret) {
-                            for (var i = 0; i < ret.data.length; i++) {
-
-                                ret.data[i].parentid = ret.data[i].deviceid;
-                                ret.data[i].deptname = ret.data[i].channelname;
-                                ret.data[i].deptid = Math.round(Math.random() * 999)
-                                    + Math.round(Math.random() * 999);
-                            }
-                            resolve((ret.data || []).map(v => {
-                                return Object.assign(v, {
-                                    key: v.deptid,
-                                })
-                            }));
-                        }
-                    });
-
-                }
-                window.setTimeout(() => {
-                    $("#dev-tree").find("div.el-tree-node__children").removeClass("el-tree-node__children");
-                }, 300);
-            }
-            ,
-            treeFilter(value, data) {
-                if (!value) return true;
-                return data.deptid.indexOf(value) !== -1 || data.deptname.indexOf(value) !== -1;
-            }
-            ,
-            treeNodeRefresh(key) {
-                let node = this.$refs['devTree'].getNode(key);
-                if (!node) return;
-                node.loaded = false;
-                node.expand();
-            }
-            ,
-            setPlayerLength(playerNum) {
-                if (this.isMobile()) {
-                    if (playerNum > 2) {
-                        this.$message({
-                            type: 'error',
-                            message: "手机端最多支持二个同时播放！"
-                        })
-                        return;
-                    }
-                }
-
-                if (playerNum == this.lastnum) {
-                    return
-                }
-
-                for (var i = 0; i < playerNum; i++) {
-                    if (playerNum == 1) {
-                        $("#player" + i).attr("class", "col-sm-12");
-                    } else if (playerNum == 2 || playerNum == 4) {
-                        $("#player" + i).attr("class", "col-sm-6");
-                    } else if (playerNum == 9) {
-                        $("#player" + i).attr("class", "col-sm-4");
-                    } else if (playerNum == 16) {
-                        $("#player" + i).attr("class", "col-sm-3");
-                    } else if (playerNum == 25) {
-                        $("#player" + i).attr("class", "col-smxx-5");
-                    } else if (playerNum == 36) {
-                        $("#player" + i).attr("class", "col-sm-2");
-                    } else if (playerNum == 64) {
-                        $("#player" + i).attr("class", "col-smxx-8");
-                    }
-                    $("#player" + i).removeAttr("style");
-                    var ui3 = playease.ui(i);
-                    ui3.play("ws://www.car-eye.cn:4025/ws?port=10077&app=live&stream=34020000001310000001_GB28181");
-                    ui3.stop();
-                }
-                for (var i = playerNum; i < 64; i++) {
-                    $("#player" + i).css("display", "none");
-                }
-                this.lastnum = playerNum;
-                this.playerLength = playerNum;
-
-            }
-            ,
-            getDeviceList() {
-                this.loading = true;
-                $.get(this.$store.state.baseUrl + "/deviceInfo/list", {
-                    q: this.q,
-                    page: this.currentPage,
-                    limit: this.pageSize,
-                    online: this.online,
-                    sort: this.sort,
-                    order: this.order
-                })
-                    .then(ret => {
-                        this.total = ret.count;
-                        this.devices = ret.data;
-                        // alert(JSON.stringify(ret.data));
-                    })
-                    .always(() => {
-                        this.loading = false;
-                    });
-            }
-            ,
-            playerrestart(fileurl, playerid, val) {
-
-
-                var container = document.getElementById(playerid);
-                // var ui.setup(container, {})
-                var ui = playease.ui(val);
-                ui.setup(container, {
-                    mode: 'live',
-                    file: fileurl,
-                    // module: 'FLV',
-                    loader: {
-                        name: 'auto',
-                        mode: 'cors',        // cors, no-cors, same-origin
-                        credentials: 'omit', // omit, include, same-origin
-                    },
-
-                    plugins: [
-                        {
-                            kind: 'Poster',
-                            file: this.logoimg,
-                            visibility: true
-                        },
-                        {
-                            kind: 'Display',
-                            layout: '',
-                            ondouBleclick: 'fullscreen',
-                            visibility: true
-                        }, {
-                            kind: 'Controlbar',
-                            layout: '||[Slider:timebar=Preview]|[Button:play=播放][Button:pause=暂停][Button:reload=重新加载][Button:stop=停止][Label:time=00:00/00:00][Button:capture=Capture][Button:mute=静音][Button:unmute=取消静音][Slider:volumebar=80][Button:fullscreen=全屏][Button:exitfullscreen=退出全屏]',
-                            autohide: false,
-                            visibility: true,
-                        }, {
-                            kind: 'ContextMenu',
-                            visibility: false,
-                            items: [{
-                                mode: '',
-                                icon: 'image/github.png',
-                                text: 'studease',
-                                shortcut: '',
-                                handler: function () {
-                                },
-                            }],
-                        }],
+                  }
                 });
-                ui.addEventListener('error', console.error);
+              }
             }
-            ,
-            getQueryString(name, defVal = "") {
-                var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
-                var r = window.location.search.substr(1).match(reg);
-                if (r != null) {
-                    return unescape(r[2]);
+          } else {
+            parentid = data.id;
+            $.ajax({
+              url: self.$store.state.baseUrl + "/deviceChannelInfo/list", // 请求路径
+              data: {
+                deviceid: parentid,
+                sort: "id",
+                order: "asc",
+              }, // 参数
+              type: "get", // 请求类型
+              async: false,
+              contentType: 'application/json;charset=utf-8',
+              error: function (request, textStatus, errorThrown) { // 设置表单提交出错
+              },
+              success: function (ret) {
+                let list = [];
+                for (let i = 0; i < ret.data.length; i++) {
+                  if(!ret.data[i].type){//过滤掉非视频通道----0：代表视频通道  1：代表语音输出通道 2 代表报警通道 3：语音输入通道  4：其他
+                    ret.data[i].parentid = ret.data[i].deviceid;
+                    ret.data[i].deptname = ret.data[i].channelname;
+                    ret.data[i].deptid = Math.round(Math.random() * 999) + Math.round(Math.random() * 999);
+                    list.push(ret.data[i]);
+                  }
                 }
-                return defVal;
-            }
-
-        }
-        ,
-        beforeRouteEnter(to, from, next) {
-            next(vm => {
-                vm.protocol = vm.getQueryString("protocol", "");
+                resolve(list.map(v => {
+                  return Object.assign(v, {
+                    key: v.deptid,
+                  })
+                }));
+              }
             });
+          }
+          window.setTimeout(() => {
+            $("#dev-tree").find("div.el-tree-node__children").removeClass("el-tree-node__children");
+          }, 300);
+        },
+        treeFilter(value, data) {
+          if (!value) return true;
+          return data.deptid.indexOf(value) !== -1 || data.deptname.indexOf(value) !== -1;
+        },
+        treeNodeRefresh(key) {
+          let node = this.$refs['devTree'].getNode(key);
+          if (!node) return;
+          node.loaded = false;
+          node.expand();
+        },
+        getQueryString(name, defVal = "") {
+          var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+          var r = window.location.search.substr(1).match(reg);
+          if (r != null) {
+            return unescape(r[2]);
+          }
+          return defVal;
         }
-        ,
-
-
-    }
-    ;
+      },
+      beforeRouteEnter(to, from, next) {
+        next(vm => {
+          vm.protocol = vm.getQueryString("protocol", "");
+        });
+      },
+      beforeDestroy(){
+        if(!!this.keepSiv){
+          clearInterval(this.keepSiv);
+          this.keepSiv = null;
+        }
+      }
+    };
 </script>
 <style>
-
     .flow-tree {
         overflow: auto;
-
     }
-
-    /*.el-tree-node__children{*/
-    /*    overflow:visible !important;*/
-    /*}*/
     .channeloffline {
         color: grey;
     }
@@ -930,8 +845,28 @@
         list-style: none;
         padding-left: 0;
         padding-right: 1%;
+        cursor: pointer;
+        position: relative;
     }
-
+    .btnmenuli-tip{
+      position: absolute;
+      top: -23px;
+      left: -60%;
+      display: none;
+      color: #1e9fff;
+      border: 1px solid #1e9fff;
+      border-radius: 4px;
+      padding: 0 6px;
+      white-space: nowrap;
+      background-color: #fff;
+      z-index: 9;
+    }
+    .btnmenuli:hover .btnmenuli-tip{
+      display: block;
+    }
+    .btnmenuli-tip.tostop{
+      left: -150%;
+    }
 
     .btnmenulist {
         width: 16px;
@@ -1001,14 +936,104 @@
         background: #42b983;
     }
 
-    video {
-        object-fit: fill;
+    .outbox {
+        overflow-y: auto;
+    }
+
+    .marleft {
+        margin-left: 2%;
     }
 </style>
 
 <style lang="less" scoped>
-    @import url(~assets/css/style.css);
-    @import url(~assets/css/classic.css);
-    @import url(~assets/css/prettify.css);
-
+  @import url(~assets/css/style.css);
+  @import url(~assets/css/classic.css);
+  @import url(~assets/css/prettify.css);
+  .the-box{
+    height: 100%;
+    width:100%;
+    background-color:#fff;
+    border-radius: 3px;
+    padding: 10px;
+    box-sizing: border-box;
+    >div{
+      padding: 0;
+      height: 100%;
+      &:first-child{
+        padding-right: 10px;
+      }
+    }
+    .depttree{
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      .tree-box{
+        border: 1px solid rgb(216, 216, 216);
+        min-height: 200px;
+        flex-grow: 1;
+        >div{
+          height: 100%;
+        }
+      }
+      .select{
+        flex-grow: 0;
+        margin: 0;
+        padding: 20px 0;
+        font-size: 14px;
+        color: black;
+        display: flex;
+        align-items: center;
+        ._label{
+          white-space: nowrap;
+          margin-right: 10px;
+        }
+      }
+    }
+    .screenbox{
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      .tool{
+        padding-left: 0;
+        padding-bottom: 5px;
+        flex-grow: 0;
+        height: 25px;
+        width: 100%;
+        text-align: left;
+      }
+      .view-list{
+        flex-grow: 1;
+        overflow: hidden;
+        .video-show{
+          height: 100%;
+          width: 100%;
+        }
+      }
+    }
+    &.ismobile{
+      height: 100% !important;
+      min-height: 700px;
+      .screenbox{
+        height: 60%;
+        padding: 0 0 10px 0;
+      }
+      .depttree{
+        height: 40%;
+        .tree-box{
+          min-height: unset;
+        }
+      }
+    }
+  }
+  @media screen and(max-width: 992px){
+    .the-box {
+      min-height: 900px;
+      .depttree{
+        height: 30%;
+      }
+      .screenbox{
+        height: 70%;
+      }
+    }
+  }
 </style>

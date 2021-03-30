@@ -15,8 +15,12 @@
                         <span class="glyphicon glyphicon-user form-control-feedback text-gray"></span>
                     </div>
                     <div :class="{'form-group':true, 'has-feedback':true,'has-error': errors.has('password')}">
-                        <input type="password" class="form-control" :placeholder="passwordPlaceholder" autocomplete="new-password" v-validate="'required'" data-vv-as="密码" name="password" v-model.trim="password" @keydown.enter="doLogin">
+                        <input type="password" class="form-control" :placeholder="passwordPlaceholder" autocomplete="new-password" v-validate="'required'" data-vv-as="密码" name="password" v-model.trim="password" @keydown.enter="$el.querySelector('#login-form [name=checkCode]').focus()">
                         <span class="glyphicon glyphicon-lock form-control-feedback text-gray"></span>
+                    </div>
+                    <div :class="{'form-group':true, 'has-feedback':true,'has-error': errors.has('checkCode')}">
+                        <input type="text" class="form-checkcode" style="width:60%;" :placeholder="checkCodePlaceholder" v-validate="'required'" data-vv-as="验证码" name="checkCode" v-model.trim="checkCode" @keydown.enter="doLogin">
+                        <img id="identifyingValue" style="position: absolute;width:40%;height:34px;" @click="changeImg()"><!-- 内部自动发送请求，加载验证码 -->
                     </div>
                     <div class="row">
                         <div class="col-xs-4">
@@ -58,7 +62,7 @@ import "bootstrap/dist/js/bootstrap.js";
 import "admin-lte/dist/js/adminlte.js";
 
 import Vue from "vue";
-import { mapState, mapActions } from "vuex";
+import { mapState } from "vuex";
 
 import VeeValidate, { Validator } from "vee-validate";
 import zh_CN from "vee-validate/dist/locale/zh_CN";
@@ -92,28 +96,31 @@ export default {
       showPanel: "login",
       username: "",
       password: "",
+      checkCode: "",
       demoUser: "",
       usernamePlaceholder: "用户名",
-      passwordPlaceholder: "密码"
+      passwordPlaceholder: "密码",
+      checkCodePlaceholder: "验证码"
     };
   },
   computed: {
-    ...mapState(["userInfo", "serverInfo"])
+    ...mapState(["serverInfo"])
   },
   async mounted() {
+    this.changeImg();
     document.title = this.serverInfo.LogoText;
     this.$el.querySelector("#login-form [name=username]").focus();
   },
   methods: {
-    ...mapActions([
-        "getUserInfo", "getServerInfo"
-    ]),
     md5(text) {
       return crypto
         .createHash("md5")
         .update(text, "utf8")
         .digest("hex")
         .toUpperCase();
+    },
+    changeImg(){
+      document.getElementById("identifyingValue").src=this.$store.state.baseUrl + "/check?"+Math.random();
     },
     async doLogin() {
       var ok = await this.$validator.validateAll();
@@ -129,10 +136,20 @@ export default {
       this.isLoading = true;
       $.post(this.$store.state.baseUrl + "/login", {
         loginname: this.username,
-        password: this.md5(this.password)
+        password: this.md5(this.password),
+        checkCode: this.checkCode
       }).then(data => {
-        var _url = url.parse(window.location.href, true);
-        window.location.href = _url.query.r || "/";
+        if(data.code >= 0){
+          var _url = url.parse(window.location.href, true);
+          window.location.href = _url.query.r || "/";
+        }else{
+          this.$message({
+            message: data.msg,
+            type: 'warning',
+          });
+          this.changeImg();
+          return;
+        }
       }).always(() => {
         this.isLoading = false;
       });
@@ -194,5 +211,18 @@ export default {
   -o-transition: -o-transform 0.2s ease;
 }
 
+</style>
+
+<style lang="less" scoped>
+  .form-checkcode{
+    height: 34px;
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #555;
+    background-color: #fff;
+    background-image: none;
+    border: 1px solid #ccc;
+  }
 </style>
 

@@ -1,10 +1,12 @@
 <template>
     <FormDlg title="设置权限" @hide="onHide" @show="onShow" @submit="onSubmit" ref="dlg" :disabled="errors.any()">
-        <el-tree
+        <el-tree class="mytree" :style="treeHeight"
         ref="permissionTree"
         :data="menuTree"
         show-checkbox
         node-key="id"
+        @node-expand="treeEvent" 
+        @node-collapse="treeEvent" 
         :default-expanded-keys="expandedKeys"
         :default-checked-keys="expandedKeys"
         :props="defaultProps">
@@ -12,7 +14,11 @@
                 
     </FormDlg>
 </template>
-
+<style scoped>
+ .mytree{
+    /* overflow: auto; */
+ }
+</style>
 <script>
 import FormDlg from 'components/FormDlg.vue'
 import $ from 'jquery'
@@ -20,6 +26,7 @@ import $ from 'jquery'
 export default {
     data() {
         return {
+            treeHeight: "",
             form: this.defForm(),
             menuTree: [],
             defaultProps: {
@@ -33,6 +40,9 @@ export default {
         FormDlg
     },
     methods: {
+        treeEvent(){
+            this.$children[0].heightchange();
+        },
         defForm() {
             return {
                 usergroupid: '',

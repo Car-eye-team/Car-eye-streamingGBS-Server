@@ -1,11 +1,11 @@
 <template>
     <FormDlg title="添加通道" @hide="onHide" @show="onShow" @submit="onSubmit" ref="dlg" :disabled="errors.any()">
-        <div :class="{'form-group':true,'has-error': errors.has('channelcode')}">
+        <div :class="{'form-group':true,'has-error': errors.has('gb_id')}">
             <label for="input-channelcode" class="col-sm-4 control-label">通道编码
                 <span class="text-red">*</span>
             </label>
             <div class="col-sm-7">
-                <input type="text" class="form-control" id="input-channelcode" name="channelcode" v-model.trim="form.channelcode" data-vv-as="通道编码" v-validate="'required'" @keydown.enter="$el.querySelector('#input-channelcode').focus()">
+                <input type="text" class="form-control" id="input-channelcode" name="gb_id" v-model.trim="form.gb_id" data-vv-as="通道编码" v-validate="'required'" @keydown.enter="$el.querySelector('#input-channelcode').focus()">
             </div>
         </div>
         <div :class="{'form-group':true,'has-error': errors.has('channelname')}">
@@ -14,6 +14,20 @@
             </label>
             <div class="col-sm-7">
                 <input type="text" class="form-control" id="input-channelname" name="channelname" v-model.trim="form.channelname" data-vv-as="通道名称" v-validate="'required'" @keydown.enter="$el.querySelector('#input-channelname').focus()">
+            </div>
+        </div>
+        <div :class="{'form-group':true,'has-error': errors.has('type')}">
+            <label for="input-type" class="col-sm-4 control-label">通道类型
+                <span class="text-red">*</span>
+            </label>
+            <div class="col-sm-7">
+                <select class="form-control" id="input-type" name="type" v-model.trim="form.type" data-vv-as="通道类型" v-validate="'required'">
+                    <option value="0">视频通道</option>
+                    <option value="1">语音输出通道</option>
+                    <option value="2">报警通道</option>
+                    <option value="3">语音输入通道</option>
+                    <option value="4">其他</option>
+                </select>
             </div>
         </div>
         <div :class="{'form-group':true,'has-error': errors.has('ptzEnable')}">
@@ -60,10 +74,11 @@ export default {
         defForm() {
             return {
                 deviceid: '',
-                channelcode: '',
+                gb_id: '',
                 channelname: '',
                 ptzEnable: '0',
-                talkEnbale: '0'
+                talkEnbale: '0',
+                type: ''
             }
         },
         onHide() {

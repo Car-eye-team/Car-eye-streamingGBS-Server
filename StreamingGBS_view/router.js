@@ -26,8 +26,14 @@ const HistoricalVideo = () => import(/* webpackChunkName: 'sipServer' */ 'compon
 
 const AlarmList = () => import(/* webpackChunkName: 'alarm' */ 'components/AlarmList.vue')
 
-Vue.use(Router);
+const DeviceTypeList = () => import(/* webpackChunkName: 'alarm' */ 'components/DeviceTypeList.vue')
 
+const VideoSetting = () => import('components/VideoSetting.vue')
+
+const VideoServerConfig = () => import(/* webpackChunkName: 'server-config' */ 'components/Server/ServerConfig.vue')
+const VideoServerStatus = () => import(/* webpackChunkName: 'server-status' */ 'components/Server/ServerStatus.vue')
+
+Vue.use(Router);
 const router = new Router({
     routes: [
         {
@@ -35,8 +41,7 @@ const router = new Router({
             component: AdminLTE,
             children: [{
                 path: '',
-                component: Dashboard,
-                props: true
+                component: VideoServerStatus
             }, {
                 path: 'devices',
                 component: ContentRoot,
@@ -123,6 +128,32 @@ const router = new Router({
                     }
                 ]
             }, {
+                path: 'DeviceType',
+                component: ContentRoot,
+                children: [
+                    {
+                        path: '',
+                        redirect: '1'
+                    }, {
+                        path: ':page',
+                        component: DeviceTypeList,
+                        props: true
+                    }
+                ]
+            }, {
+                path: 'VideoSetting',
+                component: ContentRoot,
+                children: [
+                    {
+                        path: '',
+                        redirect: '1'
+                    }, {
+                        path: ':page',
+                        component: VideoSetting,
+                        props: true
+                    }
+                ]
+            }, {
                 path: 'config',
                 component: Config
             }, {
@@ -132,16 +163,31 @@ const router = new Router({
                 path: 'historical',
                 component: HistoricalVideo
             }, {
+                path: 'server',
+                component: ContentRoot,
+                children: [
+                    {
+                        path: '',
+                        redirect: 'status'
+                    }, {
+                        path: 'status',
+                        component: VideoServerStatus
+                    }, {
+                        path: 'config',
+                        component: VideoServerConfig
+                    }
+                ]
+            }, {
                 path: 'logout',
                 async beforeEnter(to, from, next) {
                     await store.dispatch("logout");
                     window.location.href = `/login.html`;
                 }
-            }, {
+            },
+            {
                 path: '*',
                 redirect: '/'
-            }
-            ]
+            }]
         }
     ],
     linkActiveClass: 'active'
@@ -149,7 +195,6 @@ const router = new Router({
 
 router.beforeEach(async (to, from, next) => {
     var userInfo = await store.dispatch("getUserInfo");
-    var deptOptions = await store.dispatch("getDeptOptions");
     if (!userInfo) {
         next();
         return;

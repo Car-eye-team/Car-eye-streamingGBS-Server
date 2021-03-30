@@ -9,17 +9,19 @@
                 </div>
                 <div class="col-lg-4 col-xs-4 col-md-4" align="center">
                     <div class="row">
-                        <img class="djicon" src="../assets/ytimages/mk-01.png"/>
+                        <i class="fa fa-microphone-slash fa-6 mksize" aria-hidden="true" v-show="!isdj"></i>
+                        <i class="fa fa-microphone fa-6 mksize" aria-hidden="true" v-show="isdj"></i>
                     </div>
                     <div class="row">
                         <button type="button" class="btn btn-xs btn-success" @click="startDj" v-show="!isdj">开启对讲
                         </button>
-                        <button type="button" class="btn btn-xs btn-success" @click="shuntDownDj" v-show="isdj">关闭对讲 <!---->
+                        <button type="button" class="btn btn-xs btn-success" @click="shuntDownDj" v-show="isdj">关闭对讲
+                            <!---->
                         </button>
-<!--                        <button type="button" class="btn btn-xs btn-success" @click="startPlayVoice">连接socket-->
-<!--                        </button>-->
-<!--                        <button type="button" class="btn btn-xs btn-success" @click="sendMessage">发送消息-->
-<!--                        </button>-->
+                        <!--                        <button type="button" class="btn btn-xs btn-success" @click="startPlayVoice">连接socket-->
+                        <!--                        </button>-->
+                        <!--                        <button type="button" class="btn btn-xs btn-success" @click="sendMessage">发送消息-->
+                        <!--                        </button>-->
                     </div>
                 </div>
                 <div class="col-lg-5 col-xs-5 col-md-4">
@@ -47,6 +49,7 @@
                 isdj: false,
                 deviceId: '',
                 channelId: '',
+                d_gb_id: '',
                 record: null,
                 socket: null,
                 logoimgt: logot,
@@ -59,8 +62,7 @@
             $("#voiceintercom").find("div.modal-footer").remove();
             window.sendMessage = this.sendMessage;
             $("#car-eye-playervoice").html("");
-                $("#car-eye-playervoice").append("<div class='row' id='player10089'></div>");
-            // this.playerrestart("","player0",0);
+            $("#car-eye-playervoice").append("<div class='row' id='player10089'></div>");
         },
         methods: {
             onHide() {
@@ -72,6 +74,7 @@
             async show(data) {
                 this.channelId = data.channelId;
                 this.deviceId = data.deviceId;
+                this.d_gb_id= data.d_gb_id;
                 this.$nextTick(() => {
                     this.$refs['dlg'].show();
                 })
@@ -85,8 +88,8 @@
                     var ui3 = playease.ui(10089);
                     ui3.stop();
                     $.get(self.$store.state.baseUrl + "/playControl", {
-                        deviceId: self.deviceId,
-                        channelId: self.channelId,
+                        gb_id: self.channelId,
+                        d_gb_id: self.d_gb_id,
                         command: 0
                     }).then(ret => {
 
@@ -177,62 +180,73 @@
             },
             async sendMessage(data) {
                 var self = this;
-                var msg = '{"deviceId":"'+self.deviceId+'","channelId":"'+self.channelId+'","data":"'+data+'"}';
+                var msg = '{"deviceId":"' + self.deviceId + '","channelId":"' + self.channelId + '","data":"' + data + '"}';
                 self.socket.send(msg);
             },
             playerrestart(fileurl, playerid, val) {
-                var container = document.getElementById(playerid);
-                // var ui.setup(container, {})
-                var ui = playease.ui(val);
-                ui.setup(container, {
-                    mode: 'live',
-                    file: fileurl,
-                    // module: 'FLV',
-                    loader: {
-                        name: 'auto',
-                        mode: 'cors',        // cors, no-cors, same-origin
-                        credentials: 'omit', // omit, include, same-origin
-                    },
-
-                    plugins: [
-                        {
-                            kind: 'Poster',
-                            file: this.logoimgt,
-                            visibility: true
-                        },
-                        {
-                            kind: 'Display',
-                            layout: '',
-                            ondouBleclick: 'fullscreen',
-                            visibility: true
-                        }, {
-                            kind: 'Controlbar',
-                            layout: '[Slider:timebar=Preview]|[Button:play=播放][Button:pause=暂停][Button:reload=重新加载][Button:stop=停止][Label:time=00:00/00:00]||[Button:mute=静音][Button:unmute=取消静音][Slider:volumebar=80][Button:fullscreen=全屏][Button:exitfullscreen=退出全屏]',
-                            autohide: false,
-                            visibility: true,
-                        }, {
-                            kind: 'ContextMenu',
-                            visibility: false,
-                            items: [{
-                                mode: '',
-                                icon: 'image/github.png',
-                                text: 'studease',
-                                shortcut: '',
-                                handler: function () {
-                                },
-                            }],
-                        }],
-                });
-                ui.addEventListener('error', console.error);
-            } ,
-            startPlayVoice(){
+              var container = document.getElementById(playerid);
+              var ui = playease.ui(val);
+              ui.setup(container, {
+                autoplay: false,
+                bufferLength: 1.5,       // sec.
+                // level: 'error',    // debug, log, warn, error
+                file: fileurl,
+                lowlatency: self.playingType!=1?true:false,//false为服务器的点播功能
+                maxBufferLength: 3.0,    // sec.
+                maxRetries: 1, 
+                mode: "live", //live
+                module: 'FLV',
+                objectfit: "fill",
+                retrying: 0,
+                loader: {
+                  name: 'auto',
+                  mode: 'cors',        // cors, no-cors, same-origin
+                  credentials: 'omit', // omit, include, same-origin
+                },
+                service: {
+                  script: 'js/sw.js',
+                  scope: 'js/',
+                  enable: false,
+                },
+                plugins: [
+                  {
+                    kind: 'Poster',
+                    file: this.logoimgt,
+                    objectfit: 'contain', // fill, contain, cover, none, scale-down
+                    visibility: true
+                  },{
+                    kind: 'Display',
+                    layout: '',
+                    ondouBleclick: 'fullscreen',
+                    visibility: true
+                  },{
+                    kind: 'Controlbar',
+                    layout: '[Slider:timebar=Preview]|[Button:play=播放][Button:pause=暂停][Button:reload=重新加载][Button:stop=停止][Label:time=00:00/00:00]||[Button:mute=静音][Button:unmute=取消静音][Slider:volumebar=80][Button:fullscreen=全屏][Button:exitfullscreen=退出全屏]',
+                    autohide: false,
+                    visibility: true,
+                  },{
+                    kind: 'ContextMenu',
+                    visibility: false,
+                    items: [{
+                      mode: '',
+                      icon: 'image/github.png',
+                      text: 'studease',
+                      shortcut: '',
+                      handler: function () {}
+                    }]
+                  }
+                ]
+              });
+              ui.removeEventListener('error');
+              ui.addEventListener('error', console.error);
+            },
+            startPlayVoice() {
                 var self = this;
                 var url = "";
                 $.ajax({
                     url: self.$store.state.baseUrl + "/play", // 请求路径
                     data: {
-                        deviceId: self.deviceId,
-                        channelId: self.channelId,
+                        gb_id: self.channelId,
                         vedioType: 2
                     }, // 参数
                     type: "get", // 请求类型
@@ -245,7 +259,7 @@
                         url = data;
                         // var ui3 = playease.ui(0);
                         // ui3.play(url);
-                        self.playerrestart(url,"player10089",10089);
+                        self.playerrestart(url, "player10089", 10089);
                     }
                 });
             }
@@ -257,5 +271,9 @@
     .djicon {
         width: 30%;
         height: 100%;
+    }
+
+    .mksize {
+        font-size: 9vh;
     }
 </style>

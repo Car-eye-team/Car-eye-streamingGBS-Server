@@ -21,7 +21,7 @@
                 <span class="text-red">*</span>
             </label>
             <div class="col-sm-7">
-                <SelectTree width="100%" id="input-deptid" name="deptid" v-model.trim="form.deptid" v-validate="'required'" :options="this.$store.state.deptOptions" :props="{parent:'parentid',value:'deptid',label:'deptname',children:'children'}"></SelectTree>
+                <SelectTree width="100%" class="form-control" id="input-deptid" name="deptid" v-model.trim="form.deptid" v-validate="'required'" :options="this.$store.state.deptOptions" :props="{parent:'parentid',value:'deptid',label:'deptname',children:'children'}"></SelectTree>
             </div>
         </div>
         <div :class="{'form-group':true, 'has-error': errors.has('usergroupid')}">
@@ -29,7 +29,7 @@
                 <span class="text-red">*</span>
             </label>
             <div class="col-sm-7">
-                <el-select style="width:100%;" size="medium" v-model.trim="form.usergroupid" placeholder="请选择" v-validate="'required'">
+                <el-select style="width:100%;" class="form-control" size="medium" v-model.trim="form.usergroupid" placeholder="请选择" v-validate="'required'">
                     <el-option v-for="item in innerRoles" :key="item.id" :label="item.name" :value="item.id">
                     </el-option>
                 </el-select>
@@ -46,7 +46,7 @@
             <label for="input-validtimeStr" class="col-sm-4 control-label">有效期
             </label>
             <div class="col-sm-7">
-                <el-date-picker style="width:100%" id="input-validtimeStr" name="validtimeStr" v-model.trim="form.validtimeStr" data-vv-as="有效期" type="date" placeholder="选择日期" value-format="yyyy-MM-dd"></el-date-picker>
+                <el-date-picker style="width:100%" class="form-control" id="input-validtimeStr" name="validtimeStr" v-model.trim="form.validtimeStr" data-vv-as="有效期" type="date" placeholder="选择日期" value-format="yyyy-MM-dd"></el-date-picker>
             </div>
         </div>
         <div :class="{'form-group':true,'has-error': errors.has('usersex')}">
