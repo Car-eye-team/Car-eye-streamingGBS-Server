@@ -131,7 +131,7 @@
           <div id="playerTextTime">
             <p style="color: #000000; font-size: 1vh; margin-top: -5px">0/0</p>
           </div>
-          <el-slider v-model="valuepress" @change="changepress" :max="timelength" :disabled="!currentPlayingCanDrag" v-show="!isMobile()" style="margin-top: -25px"></el-slider>
+          <el-slider id="valuepressID" v-model="valuepress" @change="changepress" :max="timelength" :disabled="!currentPlayingCanDrag" v-show="!isMobile()" style="margin-top: -25px"></el-slider>
         </div>
       </div>
       <div class="row tableTextList">
@@ -287,6 +287,7 @@ export default {
       offsetTime: 0,//拖动播放时的差值，因为拖动后播放器是从0开始的
       stopApiLoad: false,//正在请求停止中防止重复提交请求
       playWattingTime: 5,//如果是设备类视频拖动的话给他三分钟的等待时间，但是三分钟后需要回复到5秒的等待时间。如果不是拖动的话只允许它等待5秒。
+      ignoreSlider: false//用来处理当拖动滚动条的时候滚动条上面的时间戳不动
     };
   },
   computed: {
@@ -347,6 +348,19 @@ export default {
       $(".yltcls").css("margin-top", "-0.4%");
       $(".downloadbtn").css("width", "14%");
     }
+    let that = this;
+    $(document).find("#valuepressID").mousedown(function(ev){
+      that.ignoreSlider = true;
+      console.log("开始阻止")
+    });
+    $(document).mouseup(function(ev){
+      if(that.ignoreSlider){
+        that.ignoreSlider = false;
+        console.log("恢复进度条");
+        setTimeout(function(){
+        },0);
+      }
+    });
   },
   methods: {
     ...mapActions([
@@ -561,14 +575,14 @@ export default {
       var total = (s2 - s1) / 1000;
       self.downloadTime = total / (self.form.speed + 1);
     },
-    getPlatfromPlayBackVideo(opt, index) {
+    getPlatfromPlayBackVideo(opt, index,timestamp) {
       var self = this;
       $.get(self.$store.state.baseUrl + "/getPlatfromPlayBackVideo", {
         d_gb_id: self.d_gb_id,
         gb_id: self.channelCodestr,
         startTime: opt.startTime.replace("T", " "),
         endTime: opt.endTime.replace("T", " "),
-        connectNumber: self.connectNumber
+        connectNumber: self.connectNumber+timestamp
       }).then((ret) => {
         var obj = eval("(" + ret + ")");
         if (obj.url != null) {
@@ -594,8 +608,6 @@ export default {
             gb_id: self.channelCodestr
           }).then((ret) => {});
           self.downloadIndex = "";
-        }else{
-
         }
         return;
       }
@@ -618,12 +630,13 @@ export default {
               var url = json["url"];
               if (typeof url == "undefined") {
 	              var code =0;
+	             var timestamp=new Date().getTime();
                  $.get(self.$store.state.baseUrl + "/fileUpload", {
                     d_gb_id: self.d_gb_id,
                     gb_id: self.channelCodestr,
                     startTime: opt.startTime.replace("T", " "),
                     endTime: opt.endTime.replace("T", " "),
-                    connectNumber : self.connectNumber,
+                    connectNumber : self.connectNumber+timestamp,
                     speed: this.form.speed,
                  }).then((ret2) => {
                     code = ret2.code;
@@ -649,7 +662,7 @@ export default {
                            gb_id: self.channelCodestr,
                            startTime: opt.startTime.replace("T", " "),
                            endTime: opt.endTime.replace("T", " "),
-                           connectNumber: self.connectNumber
+                           connectNumber: self.connectNumber+timestamp
                         }).then((ret3) => {
                             var json = JSON.parse(ret3);
                             bfb = json["percent"];
@@ -670,7 +683,7 @@ export default {
                             }
                             self.$set(self.tableDataList, index, opt);
                             if (bfb >= 100) {
-                                self.getPlatfromPlayBackVideo(opt, index);
+                                self.getPlatfromPlayBackVideo(opt, index,timestamp);
                             }
                         })
                      }, 5000);
@@ -707,6 +720,7 @@ export default {
       let accidentTime = 0;//处理意外情况，如最后一秒卡住或者网络原因卡住，5秒后作重置播放处理,拖动的话是3分钟
       let drapTime = 180;//拖动的话是3分钟后要恢复5秒的等待处理
       self.timer = setInterval(function () {
+        if(self.ignoreSlider)return;//进度条正在拖动过程中
         keepIn--;
         if(keepIn<=0){
           self.keepLogin().then(res=>{keepIn = self.$store.state.keepTime;});
@@ -804,9 +818,13 @@ export default {
             if(self.form.record==1){//如果播放的视频类型是设备类型且是边录像边播放，则禁止拖动播放进度条
               self.currentPlayingCanDrag = false;
             }
-            self.currentPlayUrl = ret;
+            if(self.isHttps()){
+                self.currentPlayUrl = ret.data.httpsurl;
+            }else{
+                self.currentPlayUrl = ret.data.url;
+            }
             self.startPlay(
-              ret,
+              self.currentPlayUrl,
               self.deviceIdstr,
               self.channelCodestr,
               opt.startTime.replace("T", " "),
@@ -824,6 +842,16 @@ export default {
         }
       }
       self.toStop(backFunc);//这样写是因为同一通道的停止->播放需要反应时间的
+    },
+    isHttps(){
+	    const ishttps = 'https:' == document.location.protocol ? true : false;
+	    var isUrl = 'https';
+	    if(ishttps) {
+	       return true;
+	    } else {
+	      return false;
+	    }
+
     },
     startPlay(url, deviceId, channelId, startTime, endTime) {//table的播放按钮-2
       var height = $("#player0").height();
@@ -1151,6 +1179,7 @@ export default {
     },
     changepress(index) {//拖动---进度
       var self = this;
+      // console.log(index);
       if (!self.playerstate) {
         self.$message({
           type: "error",

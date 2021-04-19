@@ -1,6 +1,6 @@
 import * as echarts from 'echarts/core'
 
-import { CanvasRenderer } from 'echarts/renderers'
+import { CanvasRenderer, SVGRenderer } from 'echarts/renderers'
 
 import {
   BarChart,
@@ -19,6 +19,7 @@ import {
 // 注册必须的组件
 echarts.use([
   CanvasRenderer,
+  SVGRenderer,
 
   TitleComponent,
   LegendComponent,

@@ -12,6 +12,7 @@
                         <i class="fa fa-microphone-slash fa-6 mksize" aria-hidden="true" v-show="!isdj"></i>
                         <i class="fa fa-microphone fa-6 mksize" aria-hidden="true" v-show="isdj"></i>
                     </div>
+
                     <div class="row">
                         <button type="button" class="btn btn-xs btn-success" @click="startDj" v-show="!isdj">开启对讲
                         </button>
@@ -75,6 +76,7 @@
                 this.channelId = data.channelId;
                 this.deviceId = data.deviceId;
                 this.d_gb_id= data.d_gb_id;
+		this.isdj = false;
                 this.$nextTick(() => {
                     this.$refs['dlg'].show();
                 })
@@ -84,7 +86,8 @@
                 self.isdj = false;
                 if (self.socket) {
                     self.socket.close();
-                    self.record.stop();
+                    self.socket = null;
+                    onclickStopTalk();
                     var ui3 = playease.ui(10089);
                     ui3.stop();
                     $.get(self.$store.state.baseUrl + "/playControl", {
@@ -98,83 +101,100 @@
                 }
             },
             startDj() {
-                var self = this;
-                navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia;
-                if (!navigator.getUserMedia) {
-                    alert('浏览器不支持音频输入');
-                } else {
-                    navigator.getUserMedia({
-                            audio: true
-                        },
-                        function (mediaStream) {
-                            self.init(new Recorder(mediaStream));
-
-                            self.isdj = true;
-                            console.log('开始对讲');
-                            self.useWebSocket();
-                        },
-                        function (error) {
-                            console.log(error);
-                            switch (error.message || error.name) {
-                                case 'PERMISSION_DENIED':
-                                case 'PermissionDeniedError':
-                                    console.info('用户拒绝提供信息。');
-                                    break;
-                                case 'NOT_SUPPORTED_ERROR':
-                                case 'NotSupportedError':
-                                    console.info('浏览器不支持硬件设备。');
-                                    break;
-                                case 'MANDATORY_UNSATISFIED_ERROR':
-                                case 'MandatoryUnsatisfiedError':
-                                    console.info('无法发现指定的硬件设备。');
-                                    break;
-                                default:
-                                    console.info('无法打开麦克风。异常信息:' + (error.code || error.name));
-                                    break;
-                            }
-                        }
-                    )
-                }
-
-            },
+                this.isdj = true;
+                this.useWebSocket();
+	        },
+//	              var self = this;
+//                    navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia;
+//                    if (!navigator.getUserMedia) {
+//                        alert('浏览器不支持音频输入');
+//                    } else {
+//                    navigator.getUserMedia({
+//                            audio: true
+//                        },
+//                        function (mediaStream) {
+//                            self.init(new Recorder(mediaStream));
+//
+//                            self.isdj = true;
+//                            console.log('开始对讲');
+//                            self.useWebSocket();
+//                        },
+//                        function (error) {
+//                            console.log(error);
+//                            switch (error.message || error.name) {
+//                                case 'PERMISSION_DENIED':
+//                                case 'PermissionDeniedError':
+//                                    console.info('用户拒绝提供信息。');
+//                                    break;
+//                                case 'NOT_SUPPORTED_ERROR':
+//                                case 'NotSupportedError':
+//                                    console.info('浏览器不支持硬件设备。');
+//                                    break;
+//                                case 'MANDATORY_UNSATISFIED_ERROR':
+//                                case 'MandatoryUnsatisfiedError':
+//                                    console.info('无法发现指定的硬件设备。');
+//                                    break;
+//                                default:
+//                                    console.info('无法打开麦克风。异常信息:' + (error.code || error.name));
+//                                    break;
+//                            }
+//                        }
+//                    )
+//                }
+//
+//            },
             async useWebSocket() {
-                // alert(data);
-                var self = this;
-                if (typeof (WebSocket) == "undefined") {
-                    console.log("您的浏览器不支持WebSocket");
-                } else {
-                    console.log("您的浏览器支持WebSocket");
-                    //实现化WebSocket对象，指定要连接的服务器地址与端口  建立连接
-                    var socketUrl = WEB_Socket + 10;
-                    console.log(socketUrl);
-                    if (self.socket != null) {
-                        self.socket.close();
-                        self.socket = null;
-                    }
-                    self.socket = new WebSocket(socketUrl);
-                    self.socket.binaryType = 'arraybuffer'
-                    //打开事件
-                    self.socket.onopen = function () {
-                        console.log("websocket已打开");
-                        self.startPlayVoice();
-                        self.record.start();
+                  self =this;
+                  $.get(self.$store.state.baseUrl + "/server/pick", {
+                    d_gb_id: self.d_gb_id,
+                    gb_id: self.channelId,
+                    vedioType: 2,
+                    record: 0
+                  }).then(ret => {
+                    var self = this;
+                    if (typeof (WebSocket) == "undefined") {
+                        console.log("您的浏览器不支持WebSocket");
+                    } else {
+                        console.log("您的浏览器支持WebSocket");
+                        //实现化WebSocket对象，指定要连接的服务器地址与端口  建立连接
+                        var socketUrl = "wss://"+ret.data.voiceTalkIp+":"+ret.data.voiceTalkPort+"/websocket/data/";
+                        console.log(socketUrl);
+                        if (self.socket != null) {
+                            self.socket.close();
+                            self.socket = null;
+                        }
+                        self.socket = new WebSocket(socketUrl);
+                        self.socket.binaryType = 'arraybuffer'
+                        //打开事件
+                        self.socket.onopen = function () {
+                            console.log("websocket已打开");
+                            self.isdj = true;
+                            self.startPlayVoice();
+                            onclickStartTalk(self.d_gb_id,self.channelId,self.socket);
 
-                    };
-                    //获得消息事件
-                    self.socket.onmessage = function (msg) {
-                        var serverMsg = "收到服务端信息：" + msg.data;
-                        console.log(serverMsg);
-                    };
-                    //关闭事件
-                    self.socket.onclose = function () {
-                        console.log("websocket已关闭");
-                    };
-                    //发生了错误事件
-                    self.socket.onerror = function () {
-                        console.log("websocket发生了错误");
+                        };
+                        //获得消息事件
+                        self.socket.onmessage = function (msg) {
+                            var serverMsg = "收到服务端信息：" + msg.data;
+                            console.log(serverMsg);
+                        };
+                        //关闭事件
+                        self.socket.onclose = function () {
+                            voiceSocketClose();
+                            self.isdj = false;
+                            console.log("websocket已关闭");
+                        };
+                        //发生了错误事件
+                        self.socket.onerror = function () {
+                            self.isdj = false;
+                            voiceSocketError();
+                            console.log("websocket发生了错误");
+                        }
                     }
-                }
+                });
+
             },
+
             async init(rec) {
                 this.record = rec;
             },
@@ -240,14 +260,26 @@
               ui.removeEventListener('error');
               ui.addEventListener('error', console.error);
             },
+            isHttps(){
+                    const ishttps = 'https:' == document.location.protocol ? true : false;
+                    var isUrl = 'https';
+                    if(ishttps) {
+                       return true;
+                    } else {
+                      return false;
+                    }
+
+            },
             startPlayVoice() {
                 var self = this;
                 var url = "";
                 $.ajax({
                     url: self.$store.state.baseUrl + "/play", // 请求路径
                     data: {
+                        d_gb_id: self.d_gb_id,
                         gb_id: self.channelId,
-                        vedioType: 2
+                        vedioType: 2,
+                        record: 0
                     }, // 参数
                     type: "get", // 请求类型
                     async: false,
@@ -256,10 +288,18 @@
 
                     },
                     success: function (data) {
-                        url = data;
-                        // var ui3 = playease.ui(0);
-                        // ui3.play(url);
-                        self.playerrestart(url, "player10089", 10089);
+                        var online =data.data.online;
+                            if(online==1){
+                                var url;
+                                if(self.isHttps()){
+                                    url = data.data.httpsurl;
+                                }else{
+                                    url = data.data.url;
+                                }
+                            // var ui3 = playease.ui(0);
+                            // ui3.play(url);
+                            self.playerrestart(url, "player10089", 10089);
+                        }
                     }
                 });
             }

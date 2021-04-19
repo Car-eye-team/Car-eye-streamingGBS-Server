@@ -320,7 +320,9 @@ export default {
                     if (!dom) {
                         return
                     }
-                    this._charts.disk = echarts.init(dom)
+                    this._charts.disk = echarts.init(dom, null, {
+                        renderer: 'svg'
+                    })
                     diskUpdateOption = echarts.util.clone(diskOption)
                     diskUpdateOption.yAxis.data = yAxisData
                     diskUpdateOption.legend.show = diskUpdateOption.legend.show
@@ -436,15 +438,19 @@ export default {
                                 ? [(res.data.down / 1024.0 / 1024.0 / 1024.0).toFixed(2)]
                                 : []
                         }
-                    ]
+                    ],
+                    // PENDING
+                    animationDuration: 0
                 }
 
-                if (!this._charts.flow || this._charts.flow .isDisposed()) {
+                if (!this._charts.flow || this._charts.flow.isDisposed()) {
                     const dom = this.$refs.flowChartDOM
                     if (!dom) {
                         return
                     }
-                    this._charts.flow  = echarts.init(dom)
+                    this._charts.flow  = echarts.init(dom, null, {
+                        renderer: 'svg'
+                    })
 
                     const option = echarts.util.merge(
                         echarts.util.clone(flowOption),

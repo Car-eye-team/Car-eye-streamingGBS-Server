@@ -49,7 +49,7 @@ module.exports = {
                 secure: false
             },
             "*": {
-               target: 'http://120.79.67.102:10088',//'http://120.79.67.102:10089',
+               target: 'http://120.79.67.102:10089',
                secure: false
             }
             //  "*": {

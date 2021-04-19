@@ -40,7 +40,7 @@
                     name="publicIp"
                     v-model.trim="form.publicIp"
                     data-vv-as="公网IP"
-                    v-validate="'required|ip'"
+                    v-validate="'required'"
                 >
             </div>
         </div>
@@ -142,7 +142,6 @@
                     name="voiceTalkIp"
                     v-model.trim="form.voiceTalkIp"
                     data-vv-as="语音对讲IP"
-                    v-validate="'ip'"
                 >
             </div>
         </div>
@@ -229,51 +228,6 @@
                 >
             </div>
         </div>
-        <div class="form-group" :class="{'has-error': errors.has('clearVideoPeriod')}">
-            <label for="input-clearvideoperiod" class="col-sm-4 control-label">历史视频清理周期(天)</label>
-            <div class="col-sm-7">
-                <input
-                    type="number"
-                    class="form-control" 
-                    id="input-clearvideoperiod"
-                    name="clearVideoPeriod"
-                    v-model.number="form.clearVideoPeriod"
-                    data-vv-as="历史视频清理周期"
-                    min="0"
-                    v-validate="'numeric|min_value:0'"
-                >
-            </div>
-        </div>
-        <div class="form-group" :class="{'has-error': errors.has('closeDelay')}">
-            <label for="input-closedelay" class="col-sm-4 control-label">视频关闭延迟(秒)</label>
-            <div class="col-sm-7">
-                <input
-                    type="number"
-                    class="form-control" 
-                    id="input-closedelay"
-                    name="closeDelay"
-                    v-model.number="form.closeDelay"
-                    data-vv-as="视频关闭延迟"
-                    min="0"
-                    v-validate="'numeric|min_value:0'"
-                >
-            </div>
-        </div>
-        <div class="form-group" :class="{'has-error': errors.has('sessionTimeout')}">
-            <label for="input-sessiontimeout" class="col-sm-4 control-label">会话超时时间(分钟)</label>
-            <div class="col-sm-7">
-                <input
-                    type="number"
-                    class="form-control" 
-                    id="input-sessiontimeout"
-                    name="sessionTimeout"
-                    v-model.number="form.sessionTimeout"
-                    min="0"
-                    data-vv-as="会话超时时间"
-                    v-validate="'numeric|min_value:0'"
-                >
-            </div>
-        </div>
     </FormDlg>
 </template>
 
@@ -298,19 +252,16 @@ export default {
                 localIp: '',
                 httpPort: null,
                 rtmpPort: null,
-                closeDelay: null,
                 stateCheckIp: '',
                 stateCheckPort: null,
                 record: false,
                 recordFileDir: '',
-                clearVideoPeriod: null,
                 maxBandwidth: null,
                 fileServerIp: '',
                 fileServerPort: null,
                 enabled: true,
                 voiceTalkIp: '',
-                voiceTalkPort: null,
-                sessionTimeout: null
+                voiceTalkPort: null
             }
         },
         onHide() {

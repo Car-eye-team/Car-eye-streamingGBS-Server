@@ -5,7 +5,7 @@ import url from 'url'
 
 import AdminLTE from 'components/AdminLTE.vue'
 
-const Dashboard = () => import( /* webpackChunkName: 'dashboard' */ 'components/Dashboard.vue');
+// const Dashboard = () => import( /* webpackChunkName: 'dashboard' */ 'components/Dashboard.vue');
 
 const ContentRoot = () => import( /* webpackChunkName: 'root' */ 'components/ContentRoot.vue')
 

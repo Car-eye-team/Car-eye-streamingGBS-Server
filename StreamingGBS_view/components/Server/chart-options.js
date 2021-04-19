@@ -1,5 +1,3 @@
-import { time } from '../../libs/echarts'
-
 const COLORS = ['#337ab7', '#7FFFD4']
 
 const TEXT_STYLE = {
@@ -241,6 +239,10 @@ export const diskOption = {
 		axisLine: {
 			show: false
 		},
+        axisLabel: {
+            width: 80,
+            overflow: 'truncate'
+        },
 		data: []
 	},
 	series: [{
@@ -279,7 +281,7 @@ export const bandwidthOption = {
     textStyle: TEXT_STYLE,
     grid: {
         top: 60,
-        left: 20,
+        left: 5,
         right: 10,
         bottom: 0,
         containLabel: true
@@ -313,16 +315,15 @@ export const bandwidthOption = {
         },
         axisLabel: {
             rotate: 45,
-            showMinLabel: true,
+            //showMinLabel: true,
             showMaxLabel: true,
-            formatter(p) {
-                return time.format(p, '{HH}:{mm}:{ss}')
-            }
+            formatter: '{HH}:{mm}:{ss}'
         }
     },
     yAxis: {
     	type: 'value',
         min: 0,
+        minInterval: 1,
     	axisLine: {
         	show: false
         },
@@ -331,6 +332,9 @@ export const bandwidthOption = {
 		},
         splitLine:{
         	show: true
+        },
+        axisLabel: {
+            formatter: v => v + ' Mbps'
         }
     },
     series: {
@@ -390,7 +394,8 @@ export const flowOption = {
 	legend: {
 		data: ['上行流量(G)', '下行流量(G)'],
 		bottom: 0,
-        icon: 'circle'
+        icon: 'circle',
+        selectedMode: false
 	},
 	xAxis: {
 		show: false,

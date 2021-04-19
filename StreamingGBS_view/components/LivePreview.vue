@@ -1,5 +1,5 @@
 <template>
-  <div class="the-box" id="thebox">
+  <div class="the-box" :class="{'showLYT':!isMobile()}" id="thebox">
     <div class="col-lg-3 col-md-3 depttree" id="depttree">
       <div class="tree-box" id="tab-tree-wrapper">
         <el-tree ref="devTree" class="flow-tree outbox" id="dev-tree" node-key="key" :props="treeProps" :load="treeLoad"
@@ -28,6 +28,9 @@
           <el-option class="options marleft" v-for="(item, index) in recordListLive" :key="index" :value="item.value" :label="item.label"></el-option>
         </el-select>
       </div>
+      <div class="ctr-block" v-if="!isMobile()">
+        <LiveYuntai ref="liveYuntai" id="liveyuntai" :params="yuntaiCtrData"></LiveYuntai>
+      </div>
       <VueContextMenu class="right-menu" :target="contextMenuTarget" :show="contextMenuVisible" @update:show="(show) => contextMenuVisible = show">
         <a href="javascript:;" @click="playAll" v-show="popup==1" style="color: #000000;">
           <i class="fa fa-caret-square-o-right"></i>预览全部
@@ -47,9 +50,9 @@
         <a href="javascript:;" @click="voiceintercom" style="color: #000000;" v-show="popup==2">
           <i class="fa fa-microphone"></i> 开启对讲
         </a>
-        <a href="javascript:;" @click="setYuntai" style="color: #000000;" v-show="popup==2">
+        <!-- <a href="javascript:;" @click="setYuntai" style="color: #000000;" v-show="popup==2">
           <i class="fa fa-mixcloud"></i> 云台设置
-        </a>
+        </a> -->
         <a href="javascript:;" @click="gbControl" style="color: #000000;" v-show="popup==2">
           <i class="fa fa-hand-o-right"></i> 设备控制
         </a>
@@ -85,7 +88,7 @@
         </div>
       </div>
     </div>
-    <LiveYuntai ref="liveYuntai" id="liveyuntai"></LiveYuntai>
+    
     <VoiceInterCom ref="voiceInterCom" id="voiceintercom"></VoiceInterCom>
     <LiveGbControl ref="liveGbControl" id="liveGbControl"></LiveGbControl>
   </div>
@@ -136,7 +139,7 @@
           d_gb_id: '',
           channelcount: 0,
           showstop: false,
-          terminals: new Array(),//用于存放播放中的设备信息[{deviceid,id,gb_id,channelname,status,index}...]
+          terminals: new Array(),//用于存放播放中的设备信息[{deviceid,id,d_gb_id,gb_id,channelname,status,index}...]
           logoimg: logo,
           defaultExpandedKeys: [],
           record: 0,
@@ -194,7 +197,18 @@
             }
           },
           keepSiv: null,
-          currentStopIndex: null
+          currentStopIndex: null,
+          currentChoiceScreen: "",//当前选中的窗口
+          yuntaiCtrData: {
+            deviceId: "",
+            d_gb_id: "",
+            channelId: ""
+          },
+          // yuntaiCtrData: {
+          //   deviceId: "766717310491820032",
+          //   d_gb_id: "34020000001320000098",
+          //   channelId: "34020000001310000099"
+          // },//云台控制参数
         };
       },
       computed: {
@@ -238,7 +252,7 @@
         this.contextMenuTarget = document.querySelector('#tab-tree-wrapper');
         $("#car-eye-player").html("");
         for (var i = 0; i < 64; i++) {//<a onclick='choseplayer("+i+")'></a>
-          $("#car-eye-player").append("<div class='col-smxx-8' id='player" + i + "' style='display:none;'></div>");
+          $("#car-eye-player").append("<div class='col-smxx-8 listerclick' id='player" + i + "' style='display:none;'></div>");
           this.playerrestart("", "player" + i, i);
           $("#player" + i).find("div.pe-logo").remove();
         }
@@ -246,8 +260,33 @@
         let that = this;
         $("#car-eye-player .pe-controlbar").find(".pe-button.stop").click(function(e){
           console.log("我监听到了播放器的停止按钮了",e);
+          e.stopPropagation();    //  阻止事件冒泡
           that.stopPlayApi(that.currentStopIndex);
-        })
+        });
+        $("#car-eye-player .listerclick").click(function(e){
+          e.stopPropagation();    //  阻止事件冒泡
+          if(e.currentTarget.parentNode.children.length>0){
+            for (let i = 0; i < e.currentTarget.parentNode.children.length; i++) {
+              if(e.currentTarget.parentNode.children[i].id===e.currentTarget.id){
+                if(e.currentTarget.parentNode.children[i].className.indexOf("choice")==-1){
+                  e.currentTarget.parentNode.children[i].className += " choice";
+                }
+              }else if(e.currentTarget.parentNode.children[i].className.indexOf("choice")>-1){
+                e.currentTarget.parentNode.children[i].className = e.currentTarget.parentNode.children[i].className.replace("choice","");
+              }
+            }
+          }
+          that.clickScreen(parseInt(e.currentTarget.id.split("player")[1]));
+        });
+
+
+        // let keepIn = that.$store.state.keepTime;
+        // that.keepSiv = setInterval(function(){
+        //   keepIn--;
+        //   if(keepIn<=0){
+        //     that.keepLogin().then(res=>{keepIn = that.$store.state.keepTime;});
+        //   }
+        // },1000);
       },
       methods: {
         ...mapActions([
@@ -348,28 +387,28 @@
           for (var i = 0; i < playerNum; i++) {
             $("#player" + i).removeAttr("style");
             if (playerNum == 1) {
-              $("#player" + i).attr("class", "col-sm-12 col-xs-12 col-md-12 col-lg-12");
+              $("#player" + i).attr("class", "col-sm-12 col-xs-12 col-md-12 col-lg-12 listerclick");
               $("#player" + i).css("height", "100%");
             } else if (playerNum == 2) {
-              $("#player" + i).attr("class", "col-sm-6 col-xs-6 col-md-6 col-lg-6");
+              $("#player" + i).attr("class", "col-sm-6 col-xs-6 col-md-6 col-lg-6 listerclick");
               $("#player" + i).css("height", "100%");
             } else if (playerNum == 4) {
-              $("#player" + i).attr("class", "col-sm-6 col-xs-6 col-md-6 col-lg-6");
+              $("#player" + i).attr("class", "col-sm-6 col-xs-6 col-md-6 col-lg-6 listerclick");
               $("#player" + i).css("height", "50%");
             } else if (playerNum == 9) {
-              $("#player" + i).attr("class", "col-sm-4 col-xs-4 col-md-4 col-lg-4");
+              $("#player" + i).attr("class", "col-sm-4 col-xs-4 col-md-4 col-lg-4 listerclick");
               $("#player" + i).css("height", "33.33333%");
             } else if (playerNum == 16) {
-              $("#player" + i).attr("class", "col-sm-3 col-xs-3 col-md-3 col-lg-3");
+              $("#player" + i).attr("class", "col-sm-3 col-xs-3 col-md-3 col-lg-3 listerclick");
               $("#player" + i).css("height", "25%");
             } else if (playerNum == 25) {
-              $("#player" + i).attr("class", "col-smxx-5");
+              $("#player" + i).attr("class", "col-smxx-5 listerclick");
               $("#player" + i).css("height", "20%");
             } else if (playerNum == 36) {
-              $("#player" + i).attr("class", "col-sm-2 col-xs-2 col-md-2 col-lg-2");
+              $("#player" + i).attr("class", "col-sm-2 col-xs-2 col-md-2 col-lg-2 listerclick");
               $("#player" + i).css("height", "16.666667%");
             } else if (playerNum == 64) {
-              $("#player" + i).attr("class", "col-smxx-8");
+              $("#player" + i).attr("class", "col-smxx-8 listerclick");
               $("#player" + i).css("height", "12.5%");
             }
             $("#player" + i).find("div.pe-poster").css("height", "20%");
@@ -390,6 +429,16 @@
           } else {
             this.showstop = true;
           }
+        },
+        isHttps(){
+            const ishttps = 'https:' == document.location.protocol ? true : false;
+            var isUrl = 'https';
+            if(ishttps) {
+               return true;
+            } else {
+              return false;
+            }
+
         },
         playAll() {//预览该车辆下的全部摄像头
           var self = this;
@@ -469,22 +518,34 @@
                 async: false,
                 contentType: 'application/json;charset=utf-8',
                 success: function (data) {
-                  let ui2 = playease.ui(self.terminals[screenIdx].index);
-                  ui2.stop();
-                  setTimeout(function(){
-                    ui2.play(data);
-                  },1000);
-                  $("#player" + self.terminals[screenIdx].index).find("div#souga").remove();
-                  let souga = "<div id='souga' style='padding-left:10px;float: left;position: absolute; color:#FFFFFF;margin-top:-3.5%;font-size: 1vh;'>" + self.terminals[screenIdx].channelname + "</div>";
-                  $("#player" + self.terminals[screenIdx].index).find("div.pe-controlbar").append(souga);
-                  if(!self.keepSiv){//保持登录
-                    let keepIn = self.$store.state.keepTime;
-                    self.keepSiv = setInterval(function(){
-                      keepIn--;
-                      if(keepIn<=0){
-                        self.keepLogin().then(res=>{keepIn = self.$store.state.keepTime;});
+                  if(self.currentChoiceScreen===screenIdx){
+                    self.clickScreen(screenIdx);
+                  }
+                  var online =data.data.online;
+                  if(online ==1){
+                      var url;
+                      if(self.isHttps()){
+                          url = data.data.httpsurl;
+                      }else{
+                          url = data.data.url;
                       }
-                    },1000);
+                      let ui2 = playease.ui(self.terminals[screenIdx].index);
+                      ui2.stop();
+                      setTimeout(function(){
+                        ui2.play(url);
+                      },1000);
+                      $("#player" + self.terminals[screenIdx].index).find("div#souga").remove();
+                      let souga = "<div id='souga' style='position: absolute; left:10px;color:#FFFFFF;top: 50%;font-size: 1vh;width: auto;'>" + self.terminals[screenIdx].channelname + "</div>";
+                      $("#player" + self.terminals[screenIdx].index).find("div.pe-controlbar").append(souga);
+                      if(!self.keepSiv){//保持登录
+                        let keepIn = self.$store.state.keepTime;
+                        self.keepSiv = setInterval(function(){
+                          keepIn--;
+                          if(keepIn<=0){
+                            self.keepLogin().then(res=>{keepIn = self.$store.state.keepTime;});
+                          }
+                        },1000);
+                      }
                   }
                 }
               });
@@ -545,23 +606,35 @@
             vedioType: self.vedioType,
             record: self.record
           }).then(ret => {
-            self.contextMenuVisible = false;
-            let ui2 = playease.ui(self.terminals[screenIdx].index);
-            ui2.stop();
-            setTimeout(function(){
-              ui2.play(ret);
-            },1000);
-            $("#player" + self.terminals[screenIdx].index).find("div#souga").remove();
-            let souga = "<div id='souga' style='padding-left:10px;float: left;position: absolute; color:#FFFFFF;margin-top:-3.5%;font-size: 1vh;'>" + self.terminals[screenIdx].channelname + "</div>";
-            $("#player" + self.terminals[screenIdx].index).find("div.pe-controlbar").append(souga);
-            if(!self.keepSiv){//保持登录
-              let keepIn = self.$store.state.keepTime;
-              self.keepSiv = setInterval(function(){
-                keepIn--;
-                if(keepIn<=0){
-                  self.keepLogin().then(res=>{keepIn = self.$store.state.keepTime;});
+            if(self.currentChoiceScreen===screenIdx){
+              self.clickScreen(screenIdx);
+            }
+            var online =ret.data.online;
+            if(online==1){
+                var url;
+                if(self.isHttps()){
+                    url = ret.data.httpsurl;
+                }else{
+                    url = ret.data.url;
                 }
-              },1000);
+                self.contextMenuVisible = false;
+                let ui2 = playease.ui(self.terminals[screenIdx].index);
+                ui2.stop();
+                setTimeout(function(){
+                  ui2.play(url);
+                },1000);
+                $("#player" + self.terminals[screenIdx].index).find("div#souga").remove();
+                let souga = "<div id='souga' style='position: absolute; left:10px;color:#FFFFFF;top: 50%;font-size: 1vh;width: auto;'>" + self.terminals[screenIdx].channelname + "</div>";
+                $("#player" + self.terminals[screenIdx].index).find("div.pe-controlbar").append(souga);
+                if(!self.keepSiv){//保持登录
+                  let keepIn = self.$store.state.keepTime;
+                  self.keepSiv = setInterval(function(){
+                    keepIn--;
+                    if(keepIn<=0){
+                      self.keepLogin().then(res=>{keepIn = self.$store.state.keepTime;});
+                    }
+                  },1000);
+                }
             }
           })
         },
@@ -574,6 +647,7 @@
             command: 0
           }).then(ret => {});
           that.terminals[index] = {index: index};
+          that.yuntaiCtrData = {};
         },
         stopAll() {//停止全部
           var self = this;
@@ -655,13 +729,23 @@
             this.contextMenuTarget.dispatchEvent(new_event);
           }
         },
-        setYuntai() {
+        clickScreen(index){
+          console.log("我点击了视频窗口",index);
+          this.currentChoiceScreen = index;
+          this.yuntaiCtrData = {
+            deviceId: this.terminals[index].deviceid,
+            d_gb_id: this.terminals[index].d_gb_id,
+            channelId: this.terminals[index].gb_id
+          };
+        },
+        setYuntai() {//弃用
           var self = this;
-          self.$refs["liveYuntai"].show({
+          self.contextMenuVisible = false;
+          self.yuntaiCtrData = {
             deviceId: self.nodedeviceid,
             d_gb_id: self.d_gb_id,
             channelId: self.nodechannelcode
-          });
+          };
         },
         gbControl() {
           var self = this;
@@ -824,6 +908,13 @@
     };
 </script>
 <style>
+    .listerclick{
+      border: 3px solid #fff;
+      padding: 0 !important;
+    }
+    .listerclick.choice{
+      border-color: #3cb0e6;
+    }
     .flow-tree {
         overflow: auto;
     }
@@ -988,6 +1079,11 @@
           margin-right: 10px;
         }
       }
+      .ctr-block{
+        width: 100%;
+        height: auto;
+        flex-grow: 0;
+      }
     }
     .screenbox{
       display: flex;
@@ -1033,6 +1129,14 @@
       }
       .screenbox{
         height: 70%;
+      }
+      &.showLYT{
+        .depttree{
+          height: 45%;
+        }
+        .screenbox{
+          height: 55%;
+        }
       }
     }
   }

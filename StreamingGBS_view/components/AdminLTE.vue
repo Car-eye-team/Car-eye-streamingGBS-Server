@@ -219,11 +219,9 @@ export default {
     getSomeParams(){
       let self = this;
       $.get(self.$store.state.baseUrl + "/keep", {}).then(ret => {
-        console.log(ret);
         if(ret.code==0){
           let keep = self.$store.state.keepTime;
           if(ret.data){
-            ret.data = JSON.parse(ret.data);
             if(ret.data.timeout){
               ret.data.timeout = ret.data.timeout-60; 
               self.setKeepTime(ret.data.timeout);

@@ -2,7 +2,7 @@
   <div :style="boxHeight">
     <div class="box box-primary">
       <div class="box-header">
-        <h4 class="text-primary text-center">报警列表{{startDate}}</h4>
+        <h4 class="text-primary text-center">报警列表</h4>
       </div>
       <div class="box-body box-search">
         <form class="form-inline" autocomplete="off" spellcheck="false">
