@@ -36,7 +36,7 @@ StreamingGBS 本身可以作为下级平台运行，也可以作为上级平台�
 
 
 
-管理系统jar包下载[地址](https://pan.baidu.com/s/1chO9C8jsZEK7dyQUktKuBQ)：   
+管理系统jar包下载[地址](百度网盘 pan.baidu.com/s/1chO9C8jsZEK7dyQUktKuBQ)：   
 
 提取码：b9b5 
 
