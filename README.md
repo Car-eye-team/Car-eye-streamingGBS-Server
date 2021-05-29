@@ -1,5 +1,6 @@
-﻿# Car-eye-streamingGBS-View
-GB28181 管理平台代码，采用VUE框架，实现对设备监控，管理等功能
+﻿# Car-eye-streamingGBS-Server
+
+GB28181 管理平台是car-eye开源基于GB28181协议开发的视频监控平台   
 
 # 功能一览
 ## 负载均衡
@@ -34,11 +35,25 @@ StreamingGBS 本身可以作为下级平台运行，也可以作为上级平台�
 级联层平台他可以用来管理所有下级平台的设备。上级平台可以配置多个。
 
 
+管理系统jar包下载地址：   
+
+链接：https://pan.baidu.com/s/1chO9C8jsZEK7dyQUktKuBQ 
+提取码：b9b5 
+
+
+GB28181 视频服务器是car-eye开源团队开发的一个高性能视频服务器，满足GB2181 协议。
+
+其主要的优势：
+
+1. 遵照GB28181-2011/2016 协议实现。      
+2. 支持active-MQ 通信，提供API给各种客户端访问    
+3. 支持音视频直播，对讲，设备控制，报警等。    
+4. 提供丰富的流媒体协议格式输出，既可以直接输出ws-flv转发到car-eye-live流媒体服务器，提供ws-flv，http-flv，RTMP，HLS等各种视频输出格式  
+
 # streamingGBS demo 演示地址    
 www.streaming-vip.com:10088   
 用户名：admin    
 密码：123456   
-
 
 # 联系我们
 
