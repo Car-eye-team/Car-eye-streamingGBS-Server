@@ -48,14 +48,14 @@ module.exports = {
                 ws: true,
                 secure: false
             },
-            "*": {
-               target: 'http://120.79.67.102:10089',
-               secure: false
-            }
-            //  "*": {
-            //      target: 'http://127.0.0.1:10089',
-            //      secure: false
-            //  }
+            // "*": {
+            //   target: 'http://120.79.67.102:10089',
+            //   secure: false
+            // }
+              "*": {
+                  target: 'http://127.0.0.1:10089',
+                  secure: false
+              }
         }
     },
     module: {

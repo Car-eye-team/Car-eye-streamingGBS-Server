@@ -40,7 +40,6 @@
 <script>
     import $ from 'jquery'
     import FormDlg from 'components/FormDlg.vue'
-    import {WEB_Socket} from '../assets/config/linkparam.js'
     import {Recorder} from '../assets/config/voiceconfig.js'
     import logot from "../assets/images/logo.png";
 

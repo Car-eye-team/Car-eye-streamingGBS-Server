@@ -47,6 +47,9 @@
         <a href="javascript:;" @click="playOne()" style="color: #000000;" v-show="popup==2">
           <i class="fa fa-camera"></i> 通道预览
         </a>
+        <a href="javascript:;" @click="takePhoto()" style="color: #000000;" v-show="popup==2">
+           <i class="fa fa-camera"></i> 下发拍照
+        </a>
         <a href="javascript:;" @click="voiceintercom" style="color: #000000;" v-show="popup==2">
           <i class="fa fa-microphone"></i> 开启对讲
         </a>
@@ -300,11 +303,11 @@
           });
           ui.setup(container, {
             autoplay: false,
-            bufferLength: 2.5,       // sec.
+            bufferLength: 0.5,       // sec.
             // level: 'error',    // debug, log, warn, error
             file: fileurl,
-            lowlatency: false,//false为服务器的点播功能
-            maxBufferLength: 3.0,    // sec.
+            lowlatency: true,//false为服务器的点播功能
+            maxBufferLength: 1.5,    // sec.
             maxRetries: 0,
             mode: "live", //live
             module: 'FLV',
@@ -551,6 +554,38 @@
               });
             }
           })
+        },
+            downs(opt) {
+              var self = this;
+              fetch(opt.url)
+                .then((res) => res.blob())
+                .then((blob) => {
+                  download(
+                    blob,
+                    self.nodechannelname,
+                    "jpg"
+                  );
+                });
+            },
+
+        takePhoto(){
+              let self = this;
+              $.get(self.$store.state.baseUrl + "/takePhoto", {
+                d_gb_id: self.d_gb_id,
+                gb_id: self.nodechannelcode,
+              }).then(ret => {
+                  var status =ret.data.status;
+                  var opt={};
+                  if(status==0){
+                    opt.url = ret.data.url;
+                    opt.nodechannelname = self.nodechannelname;
+                    self.downs(opt);
+                    this.$message.success({
+                        message: '拍照成功',
+                        center: true
+                    });
+                  }
+              })
         },
         playOne() {//播放
           let self = this;

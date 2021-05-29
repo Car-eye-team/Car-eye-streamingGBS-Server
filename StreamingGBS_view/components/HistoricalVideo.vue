@@ -165,7 +165,6 @@ import "assets/css/classic.css";
 import "assets/css/style.css";
 import { component as VueContextMenu } from "@xunlei/vue-context-menu";
 import ElementUI, { Switch } from "element-ui";
-import { WEB_Socket } from "../assets/config/linkparam.js";
 import logo from "../assets/images/logo.png";
 
 export default {
@@ -181,6 +180,8 @@ export default {
       sort: "id",
       order: "desc",
       form: this.defForm(),
+      timeSplitList: [],//用于存储查询的分段时间
+      apiTimeout: null,//等待查询链时间戳
       searchLoading: false,
       showplayertable: true,
       showdownloadtable: false,
@@ -525,47 +526,6 @@ export default {
       }
       return time;
     },
-    openSocket() {
-      var self = this;
-      if (typeof WebSocket == "undefined") {
-        self.$message({
-          type: "error",
-          message: "您的浏览器不支持WebSocket",
-        });
-      } else {
-        console.log("您的浏览器支持WebSocket");
-        //实现化WebSocket对象，指定要连接的服务器地址与端口  建立连接
-        var socketUrl = WEB_Socket + 10;
-        console.log(socketUrl);
-        if (self.socket != null) {
-          self.socket.close();
-          self.socket = null;
-        }
-        self.socket = new WebSocket(socketUrl);
-        //打开事件
-        self.socket.onopen = function () {
-          console.log("websocket已打开");
-          //socket.send("这是来自客户端的消息" + location.href + new Date());
-        };
-        //获得消息事件
-        self.socket.onmessage = function (msg) {
-          var serverMsg = "收到服务端信息：" + msg.data;
-          var obj = eval("(" + msg.data + ")");
-          self.channelnamestr = self.channelname;
-          self.channelCodestr = self.valueId;
-          self.deviceIdstr = self.deviceId;
-          self.tableDataList = self.tableDataList.concat(obj);
-        };
-        //关闭事件
-        self.socket.onclose = function () {
-          console.log("websocket已关闭");
-        };
-        //发生了错误事件
-        self.socket.onerror = function () {
-          console.log("websocket发生了错误");
-        };
-      }
-    },
     setDownloadTime(opt) {
       var self = this;
       var date1 = new Date(opt.startTime.replace("T", " "));
@@ -882,48 +842,126 @@ export default {
         });
         return;
       }
-      var startTime = $("#startTime").val();
-      if (startTime == "" || startTime == null) {
+      if (self.form.startTime == "" || self.form.startTime == null) {
         self.$message({
           type: "error",
           message: "请选择开始时间！",
         });
         return;
       }
-      var endTime = $("#endTime").val();
-      if (endTime == "" || endTime == null) {
+      if (self.form.endTime == "" || self.form.endTime == null) {
         self.$message({
           type: "error",
           message: "请选择结束时间！",
         });
         return;
       }
-      if (startTime >= endTime) {
+      let ts=new Date(self.form.startTime).getTime(),te=new Date(self.form.endTime).getTime();
+      if (ts >= te) {
         self.$message({
           type: "error",
           message: "开始时间要小于结束时间！",
         });
         return;
       }
-      if (self.memoryType != 1) {
+      let list = [];
+      function pushL(start,end){
+        let t = 6*60*60*1000;
+        if((start+t) >= end){
+          list.push({startT: self.formatTime(start,"yyyy-MM-dd HH:mm:ss"),endT: self.formatTime(end,"yyyy-MM-dd HH:mm:ss")});
+        }else {
+          list.push({startT: self.formatTime(start,"yyyy-MM-dd HH:mm:ss"),endT: self.formatTime(start+t,"yyyy-MM-dd HH:mm:ss")});
+          pushL(start+t,end);
+        }
+      }
+      pushL(ts,te);
+      self.timeSplitList = list;
+      if (self.memoryType != 1) {//设备类型或者设备+服务器类型
         self.openSocket();
       }
       self.searchLoading = true;
+      self.tableDataList = [];
+      self.searchListAPI();
+    },
+    openSocket() {
+      var self = this;
+      if (typeof WebSocket == "undefined") {
+        self.$message({
+          type: "error",
+          message: "您的浏览器不支持WebSocket",
+        });
+      } else {
+        console.log("您的浏览器支持WebSocket");
+        //实现化WebSocket对象，指定要连接的服务器地址与端口  建立连接
+        var socketUrl = self.$store.state.wsHost + 10;
+        console.log(socketUrl);
+        if (self.socket != null) {
+          self.socket.close();
+          self.socket = null;
+        }
+        self.socket = new WebSocket(socketUrl);
+        //打开事件
+        self.socket.onopen = function () {
+          console.log("websocket已打开");
+          //socket.send("这是来自客户端的消息" + location.href + new Date());
+        };
+        //获得消息事件
+        self.socket.onmessage = function (msg) {
+          var obj = eval("(" + msg.data + ")");
+          // console.log("收到服务端信息：",obj);
+          self.channelnamestr = self.channelname;
+          self.channelCodestr = self.valueId;
+          self.deviceIdstr = self.deviceId;
+          self.tableDataList = self.tableDataList.concat(obj);
+          if(self.memoryType != 1&&self.timeSplitList.length>0) {//设备类型或者设备+服务器类型
+            self.searchListAPI();
+          }
+        };
+        //关闭事件
+        self.socket.onclose = function () {
+          console.log("websocket已关闭");
+        };
+        //发生了错误事件
+        self.socket.onerror = function () {
+          console.log("websocket发生了错误");
+        };
+      }
+    },
+    searchListAPI(){
+      var self = this;
+      if(self.apiTimeout){
+        clearTimeout(self.apiTimeout);
+        self.apiTimeout = null;
+      }
+      self.apiTimeout = setTimeout(function(){
+        if(self.timeSplitList.length>0){//这是卡在了请求等待中了，主要是发生在有设备类型的查询中
+          self.searchListAPI();
+        }else{
+          self.searchLoading = false;
+        }
+      },5000);
       $.get(self.$store.state.baseUrl + "/queryVedioList", {
         d_gb_id: this.d_gb_id,
         gb_id: this.valueId,
         memoryType: this.memoryType,
-        startTime: startTime,
-        endTime: endTime,
+        startTime: self.timeSplitList[0].startT,
+        endTime: self.timeSplitList[0].endT,
       }).then((ret) => {
-        //if (self.memoryType != 0) {
-        self.searchLoading = false;
         self.channelnamestr = self.channelname;
         self.channelCodestr = self.valueId;
         self.deviceIdstr = self.deviceId;
-        self.tableDataList = eval("(" + ret + ")");
-        //}
-      }).catch(()=>{self.searchLoading = false;});
+        self.tableDataList = self.tableDataList.concat(eval("(" + ret + ")"));
+        self.timeSplitList.splice(0,1);//查过的去掉
+        if(!self.timeSplitList.length){
+          self.searchLoading = false;
+        }
+        if (self.memoryType == 1&&self.timeSplitList.length>0) {//服务器类型
+          self.searchListAPI();
+        }
+      }).catch(()=>{
+        self.searchLoading = false;
+        self.timeSplitList = [];
+      });
     },
     treeLoad(data, resolve) {
       var self = this;
@@ -1040,12 +1078,14 @@ export default {
           },
           success: function (ret) {
             let list = [];
-            for (let i = 0; i < ret.data.length; i++) {
-              if(!ret.data[i].type){//过滤掉非视频通道----0：代表视频通道  1：代表语音输出通道 2 代表报警通道 3：语音输入通道  4：其他
-                ret.data[i].parentid = ret.data[i].deviceid;
-                ret.data[i].deptname = ret.data[i].channelname;
-                ret.data[i].deptid = Math.round(Math.random() * 999) + Math.round(Math.random() * 999);
-                list.push(ret.data[i]);
+            if(!!ret.data){
+              for (let i = 0; i < ret.data.length; i++) {
+                if(!ret.data[i].type){//过滤掉非视频通道----0：代表视频通道  1：代表语音输出通道 2 代表报警通道 3：语音输入通道  4：其他
+                  ret.data[i].parentid = ret.data[i].deviceid;
+                  ret.data[i].deptname = ret.data[i].channelname;
+                  ret.data[i].deptid = Math.round(Math.random() * 999) + Math.round(Math.random() * 999);
+                  list.push(ret.data[i]);
+                }
               }
             }
             resolve(
@@ -1403,6 +1443,12 @@ export default {
       vm.protocol = vm.getQueryString("protocol", "");
     });
   },
+  beforeDestroy() {
+    if(this.apiTimeout){
+      clearTimeout(this.apiTimeout);
+      this.apiTimeout = null;
+    }
+  }
 };
 </script>
 <style>

@@ -81,9 +81,9 @@ export default {
       }
       if (!await this.$validator.validateAll()) {
         const e = this.errors.items[0]
-        this.$message({
-          type: 'error',
-          message: e.msg
+        this.$message.error({
+          message: e.msg,
+          center: true
         })
         $(`[name=${e.field}]`).focus()
         return
@@ -124,6 +124,7 @@ export default {
         this.remoteBasicData = JSON.parse(JSON.stringify(this.basicCommitObject))
       } catch (e) {
         console.error('failed to get base config', e)
+        this.remoteBasicData = null
         this.$message.error({
           message: '获取配置信息失败',
           center: true

@@ -29,7 +29,6 @@
     "copy-webpack-plugin": "^4.0.1",
     "cross-env": "^5.2.1",
     "css-loader": "^0.28.4",
-    "echarts": "^5.0.2",
     "element-ui": "^2.13.2",
     "exports-loader": "0.6.4",
     "expose-loader": "0.7.4",
@@ -68,6 +67,7 @@
     "webpack-dev-server": "2.9.4"
   },
   "dependencies": {
+    "echarts": "^5.0.2",
     "net": "^1.0.2",
     "size-sensor": "^1.0.1",
     "stompjs": "^2.3.3",

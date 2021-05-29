@@ -4,6 +4,7 @@ Vue.use(Vuex);
 const store = new Vuex.Store({
   state: {
     baseUrl: '/api',
+    wsHost: (location.protocol==='https:'?'wss://':'ws://')+(location.hostname=="localhost"?"121.37.198.249:10088":location.host)+"/api/webSocket/",
     serverInfo: {
       LogoText: 'StreamingGBS',
       LogoMiniText: 'GBS',
