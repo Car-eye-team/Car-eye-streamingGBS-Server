@@ -50,10 +50,6 @@ GB28181 视频服务器是car-eye开源团队开发的一个高性能视频服�
 3. 支持音视频直播，对讲，设备控制，报警等。    
 4. 提供丰富的流媒体协议格式输出，既可以直接输出ws-flv转发到car-eye-live流媒体服务器，提供ws-flv，http-flv，RTMP，HLS等各种视频输出格式  
 
-# streamingGBS demo 演示地址    
-www.streaming-vip.com:10088   
-用户名：admin    
-密码：123456   
 
 # 联系我们
 
