@@ -44,6 +44,7 @@ StreamingGBS 视频服务器主要的功能
 2. 遵照GB28181协议实现   
 3. 提供丰富的流媒体协议格式转码服务，实现RTSP,WS-FLV,RTMP,HLS等多种协议转化。
 4. 提供ws-flv，http-flv，RTMP，HLS等各种输出格式   
+5. 平台分部署部署，负载均衡支持。
  
 
 # 平台体验
