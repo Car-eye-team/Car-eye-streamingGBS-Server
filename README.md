@@ -35,11 +35,13 @@ StreamingGBS 本身可以作为下级平台运行，也可以作为上级平台�
 
 StreamingGBS 视频服务器主要的功能
 1. 遵照GB28181协议实现   
-2. 提供丰富的流媒体协议格式输出，既可以直接输出ws-flv转发到RTMP流媒体服务器   
-3. 提供ws-flv，http-flv，RTMP，HLS等各种输出格式       
+2. 提供丰富的流媒体协议格式转码服务，实现RTSP,WS-FLV,RTMP,HLS等多种协议转化。
+3. 提供ws-flv，http-flv，RTMP，HLS等各种输出格式   
+
+ 
 
 # 平台体验
-www.streaming-vip.com:10088   
+www.liveoss.com:10088   
 账号：admin    
 密码：123456   
   
@@ -47,9 +49,11 @@ www.streaming-vip.com:10088
 
 car-eye 开源官方网址：www.car-eye.cn    
 car-eye 车辆管理平台网址：www.liveoss.com  
-car-eye GB28181管理平台网址 ：www.streaming-vip.com:10088     
+car-eye GB28181管理平台网址 ：www.liveoss.com:10088     
 car-eye 技术官方邮箱: support@car-eye.cn  
 car-eye 车辆管理平台技术交流QQ群: 590411159   
 car-eye 视频服务和管理平台QQ群：713522732   
+媒体库底层链接：https://gitee.com/ireader/media-server
+
 ![](https://gitee.com/careye_open_source_platform_group/car-eye-jtt1078-media-server/raw/master/QQ/QQ.jpg)     
 CopyRight©  car-eye 开源团队 2018-2020
