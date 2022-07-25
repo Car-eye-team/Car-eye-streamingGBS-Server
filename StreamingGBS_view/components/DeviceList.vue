@@ -36,6 +36,11 @@
               </button>
             </div>
             <div class="input-group input-group-sm" v-if="hasAnyRole(buttons, userInfo, '756090393669533696')">
+              <button type="button" class="btn btn-sm btn-primary" @click.prevent="$refs['deviceMultAddDlg'].show()">
+                <i class="fa fa-plus"></i> 批量添加设备
+              </button>
+            </div>
+            <div class="input-group input-group-sm" v-if="hasAnyRole(buttons, userInfo, '756090393669533696')">
               <button type="button" class="btn btn-sm btn-primary" @click.prevent="$refs['deviceImportDlg'].show()">
                 <i class="fa fa-cloud-upload"></i> 导入设备
               </button>
@@ -62,19 +67,22 @@
           <el-table-column prop="ip" label="IP地址" min-width="120" :formatter="formatName" show-overflow-tooltip></el-table-column>
           <el-table-column prop="port" label="端口" min-width="80" :formatter="formatName" show-overflow-tooltip></el-table-column>
           <el-table-column prop="createDate" label="创建时间" min-width="160" sortable="custom" :formatter="formatDate" show-overflow-tooltip></el-table-column>
-          <el-table-column label="操作" min-width="190" fixed="right" align="center">
+          <el-table-column label="操作" width="240" fixed="right" align="center">
             <template slot-scope="props">
-                <div class="btn-group btn-group-xs">
-                    <router-link class="btn btn-info" :to="`/devices/channels/${props.row.id}/1`" v-if="hasAnyRole(buttons, userInfo, '756090917986893824')">
-                       <i class="fa fa-info"></i> 查看通道
-                    </router-link>
-                    <button type="button" class="btn btn-warning" @click.prevent="editDevice(props.row)" v-if="hasAnyRole(buttons, userInfo, '756090541694910464')">
-                      <i class="fa fa-edit"></i> 编辑
-                    </button>
-                    <button type="button" class="btn btn-danger" @click.prevent="removeDevice(props.row)" v-if="!props.row.online && hasAnyRole(buttons, userInfo, '756090618203209728')">
-                      <i class="fa fa-remove"></i> 删除
-                    </button>
-                </div>
+              <div class="btn-group btn-group-xs">
+                <router-link class="btn btn-info" :to="`/devices/channels/${props.row.id}/1`" v-if="hasAnyRole(buttons, userInfo, '756090917986893824')">
+                  <i class="fa fa-info"></i> 查看通道
+                </router-link>
+                <button type="button" class="btn btn-warning" @click.prevent="editDevice(props.row)" v-if="hasAnyRole(buttons, userInfo, '756090541694910464')">
+                  <i class="fa fa-edit"></i> 编辑
+                </button>
+                <button type="button" class="btn btn-success" @click.prevent="refreshDevice(props.row)">
+                  <i class="fa fa-refresh"></i> 刷新
+                </button>
+                <button type="button" class="btn btn-danger" @click.prevent="removeDevice(props.row)" v-if="!props.row.online && hasAnyRole(buttons, userInfo, '756090618203209728')">
+                  <i class="fa fa-remove"></i> 删除
+                </button>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -85,6 +93,7 @@
     </div>
     
     <DeviceAddDlg ref="deviceAddDlg" @submit="getDeviceList"></DeviceAddDlg>
+    <DeviceMultAddDlg ref="deviceMultAddDlg" @submit="getDeviceList"></DeviceMultAddDlg>
     <DeviceEditDlg ref="deviceEditDlg" @submit="getDeviceList"></DeviceEditDlg>
     <DeviceImportDlg ref="deviceImportDlg" @submit="getDeviceList"></DeviceImportDlg>
   </div>
@@ -95,6 +104,7 @@ import _ from "lodash";
 import url from "url";
 import DeviceEditDlg from 'components/DeviceEditDlg.vue'
 import DeviceAddDlg from 'components/DeviceAddDlg.vue'
+import DeviceMultAddDlg from 'components/DeviceMultAddDlg.vue'
 import SelectTreeSearch from 'components/SelectTreeSearch.vue'
 import DeviceImportDlg from 'components/DeviceImportDlg.vue'
 import { mapState } from "vuex"
@@ -117,46 +127,20 @@ export default {
     };
   },
   components: {
-    DeviceEditDlg,DeviceAddDlg,SelectTreeSearch,DeviceImportDlg
+    DeviceEditDlg,DeviceMultAddDlg,DeviceAddDlg,SelectTreeSearch,DeviceImportDlg
   },
   computed: {
     ...mapState(["userInfo", "buttons"])
   },
   mounted() {
-    // this.$refs["q"].focus();
     this.getDeviceList();
   },
   watch: {
     deptid: function(newVal, oldVal) {
       this.getDeviceList();
     },
-    // deptid: function(newVal, oldVal) {
-    //   this.doDelaySearch();
-    // },
-    // q: function(newVal, oldVal) {
-    //   this.doDelaySearch();
-    // },
-    // online: function(newVal, oldVal) {
-    //   this.doSearch();
-    // },
-    // currentPage: function(newVal, oldVal) {
-    //   this.doSearch(newVal);
-    // },
   },
   methods: {
-    // doSearch(page = 1) {
-    //   var query = {};
-    //   if (this.deptid) query["deptid"] = this.deptid;
-    //   if (this.q) query["q"] = this.q;
-    //   if (this.online) query["online"] = this.online;
-    //   this.$router.replace({
-    //     path: `/devices/${page}`,
-    //     query: query
-    //   });
-    // },
-    // doDelaySearch: _.debounce(function() {
-    //   this.doSearch();
-    // }, 500),
     getDeviceList() {
       this.loading = true;
       $.get(this.$store.state.baseUrl + "/deviceInfo/list", {
@@ -191,6 +175,12 @@ export default {
           this.getDeviceList();
         });
       }).catch(() => {});
+    },
+    refreshDevice(row){
+      let self = this;
+      $.get(this.$store.state.baseUrl + "/getDeviceChannel/"+row.gb_id).then(() => {
+        self.getDeviceList();
+      });
     },
     editDevice(row) {
       this.$refs["deviceEditDlg"].show({
@@ -235,14 +225,6 @@ export default {
       return "";
     },
   },
-  // beforeRouteEnter(to, from, next) {
-  //   next(vm => {
-  //     vm.deptid = to.query.deptid || "";
-  //     vm.q = to.query.q || "";
-  //     vm.online = to.query.online || "";
-  //     vm.currentPage = parseInt(to.params.page) || 1;
-  //   });
-  // },
   beforeRouteLeave(to, from, next) {
     if (this.timer) {
       clearInterval(this.timer);
@@ -252,14 +234,6 @@ export default {
   },
   beforeRouteUpdate(to, from, next) {
     next();
-    // this.$nextTick(() => {
-    //   this.deptid = to.query.deptid || "";
-    //   this.q = to.query.q || "";
-    //   this.online = to.query.online || "";
-    //   this.currentPage = parseInt(to.params.page) || 1;
-    //   this.devices = [];
-    //   this.getDeviceList();
-    // });
   }
 };
 </script>

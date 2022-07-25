@@ -8,13 +8,6 @@
       <div class="tab-content" style="height: calc(100% - 44px);">
         <div class="tab-pane  active" id="base-config">
           <form role="form" class="form-horizontal" autocomplete="off" @submit.prevent="onSubmit">
-            <div :class="{'form-group': true, 'has-error': errors.has('clearVideoPeriod')}">
-              <label for="input-clearVideoPeriod" class="col-sm-4 control-label">历史视频清理周期(天)&nbsp;<span class="text-red">*</span></label>
-              <div class="col-sm-7">
-                <input type="text" id="sip-clearVideoPeriod" class="form-control" name="clearVideoPeriod" data-vv-as="历史视频清理周期(天)" v-validate="'required|numeric|between:0,999'" v-model.trim="clearVideoPeriod">
-                <span class="help-block">{{errors.first('clearVideoPeriod')}}</span>
-              </div>
-            </div>
             <div :class="['form-group' , {'has-error': errors.has('closeDelay')}]">
               <label for="sip-closeDelay" class="col-sm-4 control-label">视频关闭延迟(秒)&nbsp;&nbsp;</label>
               <div class="col-sm-7">
@@ -27,6 +20,13 @@
               <div class="col-sm-7">
                 <input type="text" id="sip-sessionTimeout" class="form-control" name="sessionTimeout" data-vv-as="登录超时(分钟)" v-validate="'required|numeric|between:0,999'" v-model.trim="sessionTimeout">
                 <span class="help-block">{{errors.first('sessionTimeout')}}</span>
+              </div>
+            </div>
+            <div :class="{'form-group': true, 'has-error': errors.has('videoServerUrl')}">
+              <label for="input-videoServerUrl" class="col-sm-4 control-label">视频服务器地址&nbsp;<span class="text-red">*</span></label>
+              <div class="col-sm-7">
+                <input type="text" id="sip-videoServerUrl" class="form-control" name="videoServerUrl" data-vv-as="视频服务器地址" v-validate="'required'" v-model.trim="videoServerUrl">
+                <span class="help-block">{{errors.first('videoServerUrl')}}</span>
               </div>
             </div>
             <div class="form-group mybtn">
@@ -47,9 +47,9 @@ export default {
   data() {
     return {
       isBusy: false,
-      clearVideoPeriod: null,
       closeDelay: null,
-      sessionTimeout: null
+      sessionTimeout: null,
+      videoServerUrl: null
     }
   },
   computed: {
@@ -68,9 +68,9 @@ export default {
     },
     basicCommitObject() {
       return {
-        clearVideoPeriod: this.clearVideoPeriod,
         closeDelay: this.closeDelay,
-        sessionTimeout: this.sessionTimeout
+        sessionTimeout: this.sessionTimeout,
+        videoServerUrl: this.videoServerUrl
       }
     }
   },
@@ -100,13 +100,11 @@ export default {
           this.getBaseConfig()
           return
         }
-        console.error('failed to save config', res)
         this.$message.error({
           message: '配置失败',
           center: true
         })
       } catch (e) {
-        console.error('failed to save config', e)
         this.$message.error({
           message: '配置失败',
           center: true
@@ -119,11 +117,10 @@ export default {
       try {
         const res = (await $.get(this.$store.state.baseUrl + '/sysParamSet/getParamInfo')).data
         this.closeDelay = res.closeDelay,
-        this.clearVideoPeriod = res.clearVideoPeriod,
-        this.sessionTimeout = res.sessionTimeout
+        this.sessionTimeout = res.sessionTimeout,
+        this.videoServerUrl = res.videoServerUrl,
         this.remoteBasicData = JSON.parse(JSON.stringify(this.basicCommitObject))
       } catch (e) {
-        console.error('failed to get base config', e)
         this.remoteBasicData = null
         this.$message.error({
           message: '获取配置信息失败',

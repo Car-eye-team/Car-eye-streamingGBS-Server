@@ -2,7 +2,6 @@
   <div class="box box-primary">
     <div class="box-header">
       <h4 class="text-primary text-center">机构管理</h4>
-      <!-- <h6 class="text-success text-center" style="color:#006600;" v-if="!isMobile()">右键操作机构</h6> -->
       <h6 class="text-success text-center" style="color:#006600;" v-if="isMobile()">长按操作机构</h6>
     </div>
     <div class="box-body" v-if="isMobile()">
@@ -327,13 +326,6 @@ export default {
         });
         return;
       }
-      // if(this.contextMenuNodeData.subCount > 0){
-      //   this.$message({
-      //     message: '请先删除子机构',
-      //     type: 'warning',
-      //   });
-      //   return;
-      // }
       this.$confirm(`即将其下删除所有子机构、设备、通道信息，确认删除 ${this.contextMenuNodeData.deptname}`, "提示").then(() => {
         $.post(this.$store.state.baseUrl + "/dept/delete", {
           deptid: this.contextMenuNodeData.deptid

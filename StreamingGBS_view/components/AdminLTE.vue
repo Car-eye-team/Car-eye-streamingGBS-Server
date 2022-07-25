@@ -8,12 +8,6 @@
         <router-view @play="play"></router-view>
       </section>
     </div>
-    <!-- <footer class="main-footer">
-      <div class="pull-right hidden-xs hide">
-        {{serverInfo.LogoText}}
-      </div>
-      <span v-html="serverInfo.CopyrightText"></span>
-    </footer> -->
     <back-to-top text="返回顶部" class="hidden-xs"></back-to-top>
     <resize-observer @notify="handleResize"/>
   </div>
@@ -177,14 +171,6 @@ export default {
       $("body").layout("fix");
       this.fixHover();
       this.handleResize();
-      // if(!this.isIE() && !this.isMobile()) {
-      //   this.nice = $(".content").niceScroll({
-      //       zindex: 999999,
-      //       cursorwidth: "10px",
-      //       cursoropacitymax: 0.5,
-      //       enablekeyboard: false,
-      //   });
-      // }
     });
     $("body").addClass(localStorage["sidebar-collapse"]);
     //验证浏览器无操作
@@ -257,7 +243,6 @@ export default {
     },
     handleResize() {
       $(".content-wrapper").css("height",$(".content-wrapper").css("min-height"));
-      // this.nice && this.nice.resize();
     },
     play(video){
     },

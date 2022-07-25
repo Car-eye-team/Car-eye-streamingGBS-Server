@@ -100,33 +100,9 @@ export default {
     ...mapState(["userInfo", "buttons"])
   },
   mounted() {
-    // this.$refs["q"].focus();
     this.getUserList();
   },
-  watch: {
-    // q: function(newVal, oldVal) {
-    //   this.doDelaySearch();
-    // },
-    // online: function(newVal, oldVal) {
-    //   this.doSearch();
-    // },
-    // currentPage: function(newVal, oldVal) {
-    //   this.doSearch(newVal);
-    // },
-  },
   methods: {
-    // doSearch(page = 1) {
-    //   var query = {};
-    //   if (this.q) query["q"] = this.q;
-    //   if (this.online) query["online"] = this.online;
-    //   this.$router.replace({
-    //     path: `/user/${page}`,
-    //     query: query
-    //   });
-    // },
-    // doDelaySearch: _.debounce(function() {
-    //   this.doSearch();
-    // }, 500),
     getUserList() {
       this.loading = true;
       $.get(this.$store.state.baseUrl + "/user/list", {
@@ -204,25 +180,11 @@ export default {
       return "-";
     },
   },
-  // beforeRouteEnter(to, from, next) {
-  //   next(vm => {
-  //     vm.q = to.query.q || "";
-  //     vm.online = to.query.online || "";
-  //     vm.currentPage = parseInt(to.params.page) || 1;
-  //   });
-  // },
   beforeRouteLeave(to, from, next) {
     next();
   },
   beforeRouteUpdate(to, from, next) {
     next();
-    // this.$nextTick(() => {
-    //   this.q = to.query.q || "";
-    //   this.online = to.query.online || "";
-    //   this.currentPage = parseInt(to.params.page) || 1;
-    //   this.datas = [];
-    //   this.getUserList();
-    // });
   }
 };
 </script>

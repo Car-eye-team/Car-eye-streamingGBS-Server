@@ -1,10 +1,10 @@
 var Recorder = function (stream) {
-    var self = this;
     var sampleBits = 16; //输出采样数位 8, 16
     var sampleRate = 8000; //输出采样率
     var context = new AudioContext();
     var audioInput = context.createMediaStreamSource(stream);
     var recorder = context.createScriptProcessor(4096, 1, 1);
+    var ws;
     var audioData = {
         size: 0, //录音文件长度
         buffer: [], //录音缓存
@@ -56,36 +56,23 @@ var Recorder = function (stream) {
             return new Blob([data]);
         }
     };
+
     var sendData = function () { //对以获取的数据进行处理(分包)
         var reader = new FileReader();
         reader.onload = e => {
             var outbuffer = e.target.result;
-            var arr = new Int8Array(outbuffer);
-            if (arr.length > 0) {
-                var tmparr = new Int8Array(1024);
-                var j = 0;
-                for (var i = 0; i < arr.byteLength; i++) {
-                    tmparr[j++] = arr[i];
-                    if (((i + 1) % 1024) == 0) {
-                        sendMessage(tmparr);
-                        if (arr.byteLength - i - 1 >= 1024) {
-                            tmparr = new Int8Array(1024);
-                        } else {
-                            tmparr = new Int8Array(arr.byteLength - i - 1);
-                        }
-                        j = 0;
-                    }
-                    if ((i + 1 == arr.byteLength) && ((i + 1) % 1024) != 0) {
-                        sendMessage(tmparr);
-                    }
-                }
-            }
+            var arr = new Uint16Array(outbuffer);
+            //var arr = new Uint16Array(2);
+            var dst = new Int8Array(arr.length);
+            pcm16_to_alaw(arr.byteLength,arr,dst);
+            ws.send(dst);
         };
         reader.readAsArrayBuffer(audioData.encodePCM());
         audioData.clear();//每次发送完成则清理掉旧数据
     };
 
-    this.start = function () {
+    this.start = function (_ws) {
+        ws = _ws;
         audioInput.connect(recorder);
         recorder.connect(context.destination);
     }

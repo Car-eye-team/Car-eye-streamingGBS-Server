@@ -125,29 +125,9 @@ export default {
     ...mapState(["userInfo", "buttons"])
   },
   mounted() {
-    // this.$refs["q"].focus();
     this.getDeviceTypeList();
   },
-  watch: {
-    // q: function(newVal, oldVal) {
-    //   this.doDelaySearch();
-    // },
-    // currentPage: function(newVal, oldVal) {
-    //   this.doSearch(newVal);
-    // },
-  },
   methods: {
-    // doSearch(page = 1) {
-    //   var query = {};
-    //   if (this.q) query["q"] = this.q;
-    //   this.$router.replace({
-    //     path: `/DeviceType/${page}`,
-    //     query: query
-    //   });
-    // },
-    // doDelaySearch: _.debounce(function() {
-    //   this.doSearch();
-    // }, 500),
     getDeviceTypeList() {
       this.loading = true;
       $.get(this.$store.state.baseUrl + "/deviceType/list", {
@@ -230,23 +210,11 @@ export default {
       return "";
     },
   },
-  // beforeRouteEnter(to, from, next) {
-  //   next(vm => {
-  //     vm.q = to.query.q || "";
-  //     vm.currentPage = parseInt(to.params.page) || 1;
-  //   });
-  // },
   beforeRouteLeave(to, from, next) {
     next();
   },
   beforeRouteUpdate(to, from, next) {
     next();
-    // this.$nextTick(() => {
-    //   this.q = to.query.q || "";
-    //   this.currentPage = parseInt(to.params.page) || 1;
-    //   this.datas = [];
-    //   this.getDeviceTypeList();
-    // });
   }
 };
 </script>

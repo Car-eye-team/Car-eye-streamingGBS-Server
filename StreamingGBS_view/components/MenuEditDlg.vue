@@ -25,10 +25,6 @@
                 <span class="text-red">*</span>
             </label>
             <div class="col-sm-7">
-                <!-- <el-select style="width:100%;" size="medium" v-model.trim="form.parentmenuid" placeholder="请选择" v-validate="'required'">
-                    <el-option v-for="item in parentMenus" :key="item.id" :label="item.name" :value="item.id">
-                    </el-option>
-                </el-select> -->
                 <SelectTree width="100%" class="form-control" id="input-parentmenuid" name="parentmenuid" v-model.trim="form.parentmenuid" :options="parentMenus" :props="{parent:'parentid',value:'menuid',label:'menuname',children:'children'}" v-validate="'required'"></SelectTree>
             </div>
         </div>

@@ -36,33 +36,25 @@ module.exports = {
     },
     devServer: {
         host: '0.0.0.0',
+        open: false,
+        port: 8089,
         useLocalIp: true,
         proxy: {
-            "**/ws-flv/**/*.flv": {
-                target: `ws://127.0.0.1:10000`,
-                ws: true,
+            "*": {
+                target: 'http://117.78.22.17:10088',
                 secure: false
-            },
-            "**/ws-talk/**": {
-                target: `ws://127.0.0.1:10000`,
-                ws: true,
-                secure: false
-            },
-            // "*": {
-            //   target: 'http://120.79.67.102:10089',
-            //   secure: false
-            // }
-              "*": {
-                  target: 'http://127.0.0.1:10089',
-                  secure: false
-              }
+            }
         }
     },
     module: {
         rules: [{
             test: /\.js$/,
-            loader: 'babel-loader',
-            exclude: /node_modules/
+            use: [{
+                loader: 'babel-loader',
+                options: {
+                    presets: ['es2015']
+                }
+            }]
         }, {
             test: /pretty-bytes/,
             loader: 'babel-loader'
@@ -139,7 +131,6 @@ module.exports = {
         new CopyWebpackPlugin([
             {from: 'externals'},
             {from: 'node_modules/@liveqing/liveplayer/dist/component/liveplayer-lib.min.js', to: 'js/'},
-            // {from: 'assets/js/playease.min.js', to: 'js/'},
             {from: 'node_modules/@liveqing/liveplayer/dist/component/liveplayer.swf'}
         ]),
         new ExtractTextPlugin("css/[name].[chunkhash:8].css"),

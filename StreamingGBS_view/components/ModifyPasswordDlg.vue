@@ -54,7 +54,6 @@ export default {
         },
         onShow() {
             this.errors.clear();
-            // this.$el.querySelector('#old-password').focus();
         },
         async onSubmit() {
             var ok = await this.$validator.validateAll();

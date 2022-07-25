@@ -129,9 +129,6 @@ export default {
           etime: j+1,
           choice: false
         };
-        // if([0,1,6,7,9,10,12,15,20,21,22,23].indexOf(j)>-1){
-        //   tip.choice = true;
-        // }
         temp.times.push(tip);
       }
 
@@ -421,10 +418,6 @@ export default {
               border-left: none;
               position: relative;
               cursor: pointer;
-              // &:hover{
-              //   background-color: #256fb0;
-              //   border-color: #256fb0;
-              // }
               &:first-child{
                 border-left: 1px solid rgb(216, 216, 216);
               }

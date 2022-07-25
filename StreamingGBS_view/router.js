@@ -5,33 +5,28 @@ import url from 'url'
 
 import AdminLTE from 'components/AdminLTE.vue'
 
-// const Dashboard = () => import( /* webpackChunkName: 'dashboard' */ 'components/Dashboard.vue');
+const ContentRoot = () => import('components/ContentRoot.vue')
 
-const ContentRoot = () => import( /* webpackChunkName: 'root' */ 'components/ContentRoot.vue')
+const DeviceList = () => import('components/DeviceList.vue')
+const ChannelList = () => import('components/ChannelList.vue')
+const UserList = () => import('components/UserList.vue')
+const Config = () => import('components/Config.vue')
 
-const DeviceList = () => import( /* webpackChunkName: 'device' */ 'components/DeviceList.vue')
-const ChannelList = () => import( /* webpackChunkName: 'device' */ 'components/ChannelList.vue')
-const UserList = () => import(/*webpackChunkName: 'user' */ 'components/UserList.vue')
-const Config = () => import(/* webpackChunkName: 'config' */ 'components/Config.vue')
+const DeptTree = () => import('components/DeptTree.vue')
 
-const DeptTree = () => import(/* webpackChunkName: 'deptTree' */ 'components/DeptTree.vue')
+const RoleList = () => import('components/RoleList.vue')
 
-const RoleList = () => import(/* webpackChunkName: 'role' */ 'components/RoleList.vue')
+const MenuList = () => import('components/MenuList.vue')
 
-const MenuList = () => import(/* webpackChunkName: 'menu' */ 'components/MenuList.vue')
+const LivePreview = () => import( 'components/LivePreview.vue')
+const HistoricalVideo = () => import('components/HistoricalVideo.vue')
 
-const SipServerList = () => import(/* webpackChunkName: 'sipServer' */ 'components/SipServerList.vue')
-const LivePreview = () => import(/* webpackChunkName: 'sipServer' */ 'components/LivePreview.vue')
-const HistoricalVideo = () => import(/* webpackChunkName: 'sipServer' */ 'components/HistoricalVideo.vue')
+const AlarmList = () => import('components/AlarmList.vue')
 
-const AlarmList = () => import(/* webpackChunkName: 'alarm' */ 'components/AlarmList.vue')
-
-const DeviceTypeList = () => import(/* webpackChunkName: 'alarm' */ 'components/DeviceTypeList.vue')
+const DeviceTypeList = () => import('components/DeviceTypeList.vue')
 
 const VideoSetting = () => import('components/VideoSetting.vue')
-
-const VideoServerConfig = () => import(/* webpackChunkName: 'server-config' */ 'components/Server/ServerConfig.vue')
-const VideoServerStatus = () => import(/* webpackChunkName: 'server-status' */ 'components/Server/ServerStatus.vue')
+const SysLog = () => import('components/SysLog.vue')
 
 Vue.use(Router);
 const router = new Router({
@@ -41,7 +36,7 @@ const router = new Router({
             component: AdminLTE,
             children: [{
                 path: '',
-                component: VideoServerStatus
+                redirect: 'Live'
             }, {
                 path: 'devices',
                 component: ContentRoot,
@@ -62,19 +57,6 @@ const router = new Router({
             }, {
                 path: 'deptTree',
                 component: DeptTree
-            }, {
-                path: 'sipServer',
-                component: ContentRoot,
-                children: [
-                    {
-                        path: '',
-                        redirect: '1'
-                    }, {
-                        path: ':page',
-                        component: SipServerList,
-                        props: true
-                    }
-                ]
             }, {
                 path: 'role',
                 component: ContentRoot,
@@ -160,23 +142,11 @@ const router = new Router({
                 path: 'Live',
                 component: LivePreview
             }, {
+                path: 'sysLog',
+                component: SysLog
+            }, {
                 path: 'historical',
                 component: HistoricalVideo
-            }, {
-                path: 'server',
-                component: ContentRoot,
-                children: [
-                    {
-                        path: '',
-                        redirect: 'status'
-                    }, {
-                        path: 'status',
-                        component: VideoServerStatus
-                    }, {
-                        path: 'config',
-                        component: VideoServerConfig
-                    }
-                ]
             }, {
                 path: 'logout',
                 async beforeEnter(to, from, next) {
@@ -237,8 +207,6 @@ router.beforeEach(async (to, from, next) => {
                 }
             }
         }
-        // next('/devices')
-        // window.location.href = `/#/devices/1`;
         return;
     }
     next();

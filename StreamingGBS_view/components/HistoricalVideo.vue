@@ -6,7 +6,7 @@
         <div class="col-sm-9 forinput" id="treeselectLi">
           <el-select style="width: 100%" size="small" :value="valueTitle" ref="select" popper-class="my-select">
             <el-option :value="valueTitle" :label="valueTitle" class="options">
-              <el-tree ref="devTree" class="my-select-tree" id="dev-tree" node-key="deptid" v-if="showTree" :props="treeProps" :load="treeLoad" lazy @node-click="handleNodeClick">
+              <el-tree ref="devTree" class="my-select-tree" id="dev-tree" node-key="deptid" :props="treeProps" :load="treeLoad" lazy @node-click="handleNodeClick">
                 <span class="custom-tree-node" slot-scope="{ node, data }">
                   <span>
                     <i :class="['fa',{'fa-sitemap':typeof data.parentid != 'undefined' && typeof data.channelname == 'undefined',
@@ -62,18 +62,15 @@
           </el-select>
         </div>
       </div>
-      <div class="form-group row">
+      <!-- <div class="form-group row">
         <label for="input-record" class="col-sm-3 control-label text-left mobilefont">是否录像</label>
         <div class="col-sm-9 forinput">
           <el-select style="width: 100%" id="input-record" size="small" name="record" v-model.trim="form.record" placeholder="1">
             <el-option class="options marleft" v-for="(item, index) in recordList" :key="index" :value="item.value" :label="item.label"></el-option>
           </el-select>
         </div>
-      </div>
+      </div> -->
       <div class="row text-center">
-        <!-- <el-button type="button" style="margin-right:15px;" size="medium" class="btn btn-md btn-success" @click.prevent="searchList" v-loading="searchLoading">
-          <i class="fa fa-search mobilefont"></i> 搜索
-        </el-button> -->
         <el-button size="medium" type="primary" icon="el-icon-search" @click.prevent="searchList">搜索</el-button>
       </div>
     </div>
@@ -112,7 +109,6 @@
             </li>
             <li style="width: 30%;box-sizing:border-box;padding-right:5px;" class="controlmenulistt yltcls" >
               <el-slider v-model="value1" @change="changemute"></el-slider>
-              <!--<img class="btnmenulist" src="../assets/images/unmute.png"/>-->
             </li>
             <li @click.prevent="setPlayerPlay(6)" class="controlmenulistt">
               <img class="controlbtnmenulist" src="../assets/images/backward.png" />
@@ -140,19 +136,26 @@
           <el-table-column class="mobilefont" prop="startTime" width="160" :formatter="stateFormatStartTime" label="开始时间" show-overflow-tooltip></el-table-column>
           <el-table-column class="mobilefont" prop="endTime" width="160" :formatter="stateFormatEndTime" label="结束时间" show-overflow-tooltip></el-table-column>
           <el-table-column class="mobilefont" prop="memoryType" width="70" :formatter="memoryTypeFormat" label="来源" show-overflow-tooltip></el-table-column>
-          <el-table-column class="mobilefont" width="120" label="操作">
+          <el-table-column class="mobilefont" width="150" label="操作">
             <template slot-scope="props">
               <div class="btn-group btn-group-xs">
                 <button type="button" class="btn btn-warning mobilefont" @click.prevent="playBackplayer(props.row)">
                   <i class="fa fa-play"></i> 播放
                 </button>
-                <button type="button" class="btn btn-danger mobilefont" @click.prevent="downLoadVideo(props.row, props.$index)" v-show="!isMobile()">
+                <button type="button" class="btn btn-danger mobilefont" @click.prevent="downLoadVideo(props.row)" v-show="!isMobile()&&!props.row.downing">
                   <i class="fa fa-download"></i> 下载
+                </button>
+                <button type="button" class="btn btn-danger mobilefont" @click.prevent="downLoadVideo(props.row)" v-show="!isMobile()&&props.row.downing">
+                  <i class="fa fa-stop-circle"></i> 中止下载
                 </button>
               </div>
             </template>
           </el-table-column>
-          <el-table-column class="mobilefont" prop="press" width="80" label="下载进度" show-overflow-tooltip v-show="isdevice"></el-table-column>
+          <el-table-column class="mobilefont" width="160" label="下载进度" show-overflow-tooltip>
+            <template slot-scope="props">
+              {{!props.row.downLocaling?((props.row.press.indexOf("%")>-1?"上传进度":"")+props.row.press):((props.row.press.indexOf("%")>-1?"下载进度":"")+props.row.press)}}
+            </template>
+          </el-table-column>
         </el-table>
       </div>
     </div>
@@ -172,30 +175,24 @@ export default {
   data() {
     return {
       playerLength: 1,
-      protocol: "",
-      q: "",
-      online: "",
-      total: 0,
-      pageSize: 10,
-      sort: "id",
-      order: "desc",
       form: this.defForm(),
       timeSplitList: [],//用于存储查询的分段时间
       apiTimeout: null,//等待查询链时间戳
       searchLoading: false,
       showplayertable: true,
-      showdownloadtable: false,
       logoimg: logo,
-      deviceId: "",
-      gb_id: "",
-      d_gb_id: "",
+      valueTitle: "",//摄像头下拉框回显值
+      devicenameStr: "",//摄像头下拉框选中通道对应的设备名称
+      deviceId: "",//摄像头下拉框对应的deviceid
+      d_gb_id: "",//摄像头下拉框对应的设备gb_id
+      gb_id: "",////摄像头下拉框对应的通道gb_id
+      channelname: "",//点击选中树的通道名称
       memoryType: 0,
       value1: 100,
-      valuepress: 0,
-      issilence: false,
+      valuepress: 0,//播放进度条
+      issilence: false,//是否静音
       isplay: false,
-      showTree: true,
-      fFstate: 0,
+      fFstate: 0,//播放倍率
       playerstate: false,
       recordList: [
         {
@@ -258,37 +255,39 @@ export default {
           return false;
         },
       },
-      valueId: "", // 初始值
-      valueTitle: "",
-      socket: null,
-      tableDataList: [],
-      channelname: "",
-      channelnamestr: "",
-      deviceIdstr: "",
-      channelCodestr: "",
-      playingType: "",
+      tableDataList: [
+        // {
+        //   startTime: "2022-01-15 08:37:41",
+        //   endTime: "2022-01-15 15:48:40",
+        //   url: "",
+        //   playing: false,//是否正在播放
+        //   press: "",//下载进度
+        //   downing: false,//是否正在下载，设备上传视频到服务器
+        //   downLocaling: false,//是否正在下载到本地
+        //   dowloadStreamId: "",
+        //   connectNumber :"1",//下载时的通道连接编号
+        //   downWattingTime: 15,//下载时的设备类视频下载等待次数，如果查到设备已经上传视频到服务器进度已到达100%，请求获取服务器下载地址的超过它及判定下载失败了
+        // }
+      ],
+      channelnamestr: "",//查询出的通道名称
+      deviceIdstr: "",//查询出的deviceid
+      d_gb_idstr: "",//查询出的设备gb_id
+      gb_idstr: "",//查询出的通道gb_id
+      playingType: "",//播放视频类型，设备或者服务器
       timelength: 10,
-      timer: "",
-      isdevice: false,
-      downloadspeed: 0,
-      downloadTime: 0,
-      speedTime: 0,
-      dtimer: "",
-      showSiper: false,
+      timer: null,//播放器进度计时器
       timeText: "",
-      timeSsText: "",
-      devicenameStr: "",
-      downloadOpt: "",
-      downloadIndex: "",
-      connectNumber :"1",
       dragWaitting: false,//设备类视频拖拽播放等待中
       dragType: 0,//1往后拖动，2往前拖动
       currentPlayingCanDrag: true,//当前播放视频是否可以拖动播放
-      currentPlayUrl: "",
+      currentPlayUrl: "",//当前播放地址
+      playerchannelgbId: "",//当前播放通道的gbId
+      streamId: "",//控制播放视频--/playBackControl接口用到
       offsetTime: 0,//拖动播放时的差值，因为拖动后播放器是从0开始的
       stopApiLoad: false,//正在请求停止中防止重复提交请求
       playWattingTime: 5,//如果是设备类视频拖动的话给他三分钟的等待时间，但是三分钟后需要回复到5秒的等待时间。如果不是拖动的话只允许它等待5秒。
-      ignoreSlider: false//用来处理当拖动滚动条的时候滚动条上面的时间戳不动
+      ignoreSlider: false,//用来处理当拖动滚动条的时候滚动条上面的时间戳不动
+      dtimer: null,//视频下载进度计时器
     };
   },
   computed: {
@@ -320,8 +319,6 @@ export default {
     }
   },
   mounted() {
-    this.connectNumber = this.getGuid();
-    //this.setDownloadSpeed();
     this.reloadPlayer();
     this.setPlayerLength(this.playerLength);
     this.form.memoryType = "0";
@@ -367,6 +364,31 @@ export default {
     ...mapActions([
       "keepLogin"
     ]),
+    handleNodeClick(node) {//选中节点
+      if (typeof node.channelname == "undefined") {
+        return;
+      } else {
+        var devicename = "";
+        $.get(this.$store.state.baseUrl + "/deviceInfo/details", {
+          id: node.deviceid,
+        }).then((ret) => {
+          if (ret.code == 0) {
+            devicename = ret.data.devicename;
+            this.devicenameStr = ret.data.devicename;
+          }
+          this.valueTitle = node.deptname; //获取label
+          this.gb_id = node.gb_id; 
+          this.deviceId = node.deviceid;
+          this.d_gb_id = node.d_gb_id;
+          this.channelname = node.channelname;
+          this.$emit("getValue", this.gb_id); //传值给父组件
+          $("div .is-focus").click();
+          setTimeout(function () {
+            $("#treeselectLi").find("input.el-input__inner").val(devicename + "/" + node.deptname);
+          }, 50);
+        });
+      }
+    },
     defForm() {
       return {
         deptid: "",
@@ -378,25 +400,23 @@ export default {
         record: 0,
       };
     },
-    getGuid(){
-        var guid = "";
-        for (var i = 1; i <= 32; i++){
-            var flag = Math.floor(Math.random() * 10);
-            //如果是偶数就设置成为
-            if(flag%2 == 0) {
-                //全大写
-                var n = Math.floor(flag*2.4) + 65;
-                //全小写
-                // var n = Math.floor(flag*2.4) + 97;
-                var n = String.fromCharCode(n);
-                guid += n;
-            } else {
-                guid += flag;
-            }
-          // if((i==8)||(i==12)||(i==16)||(i==20))
-          //   guid += "-";
+    getGuid(){//生成随机字符串
+      var guid = "";
+      for (var i = 1; i <= 32; i++){
+        var flag = Math.floor(Math.random() * 10);
+        //如果是偶数就设置成为
+        if(flag%2 == 0) {
+          //全大写
+          var n = Math.floor(flag*2.4) + 65;
+          //全小写
+          // var n = Math.floor(flag*2.4) + 97;
+          var n = String.fromCharCode(n);
+          guid += n;
+        } else {
+          guid += flag;
         }
-        return guid;
+      }
+      return guid;
     },
     reloadPlayer() {//初始化播放器
       this.playerrestart("", "player0", 0);
@@ -421,16 +441,16 @@ export default {
       var ui =playease.ui(val);
       ui.setup(container, {
         autoplay: false,
-        bufferLength: 1.5,       // sec.
+        bufferLength: 2.5,//1.5,       // sec.
         // level: 'error',    // debug, log, warn, error
         file: fileurl,
         lowlatency: self.playingType!=1?true:false,//false为服务器的点播功能
-        maxBufferLength: 3.0,    // sec.
-        maxRetries: 1, 
+        maxBufferLength: 3.5,//3.0,    // sec.
+        maxRetries: 10,//1, 
         mode: "live", //live
         module: 'FLV',
         objectfit: "fill",
-        retrying: 0,
+        retrying: 200,//0,
         loader: {
           name: "auto",
           mode: "cors", // cors, no-cors, same-origin
@@ -499,16 +519,6 @@ export default {
       }
       return name;
     },
-    setDownloadSpeed() {
-      var self = this;
-      $.get(self.$store.state.baseUrl + "/sysParamSet/getParamInfo", {}).then(
-        (ret) => {
-          if (ret.code == "0") {
-            self.downloadspeed = ret.data.speed;
-          }
-        }
-      );
-    },
     stateFormat() {
       return this.channelnamestr;
     },
@@ -526,151 +536,232 @@ export default {
       }
       return time;
     },
-    setDownloadTime(opt) {
+    downLoadVideo(opt) {//table的下载按钮
       var self = this;
-      var date1 = new Date(opt.startTime.replace("T", " "));
-      var date2 = new Date(opt.endTime.replace("T", " "));
-      var s1 = date1.getTime(),
-        s2 = date2.getTime();
-      var total = (s2 - s1) / 1000;
-      self.downloadTime = total / (self.form.speed + 1);
-    },
-    getPlatfromPlayBackVideo(opt, index,timestamp) {
-      var self = this;
-      $.get(self.$store.state.baseUrl + "/getPlatfromPlayBackVideo", {
-        d_gb_id: self.d_gb_id,
-        gb_id: self.channelCodestr,
-        startTime: opt.startTime.replace("T", " "),
-        endTime: opt.endTime.replace("T", " "),
-        connectNumber: self.connectNumber+timestamp
-      }).then((ret) => {
-        var obj = eval("(" + ret + ")");
-        if (obj.url != null) {
-          clearInterval(self.dtimer);
-          opt.press = "上传完成";
-          opt.url = obj.url;
-          self.$set(self.tableDataList, index, opt);
-          self.downs(opt);
-          self.downloadOpt = "";
-          self.downloadIndex = "";
-        }
-      });
-    },
-    downLoadVideo(opt, index) {//table的下载按钮
-      var self = this;
-      if (self.downloadIndex !== "") {
-        if (confirm("已有正在下载的视频，是否停止?")){ //并开始新视频下载！")) {
-          self.downloadOpt.press = "已停止";
-          self.$set(self.tableDataList, self.downloadIndex, self.downloadOpt);
-          clearInterval(self.dtimer);
+      let index = self.tableDataList.findIndex(_=>_.downing);
+      if (index>-1&&self.tableDataList[index].startTime!=opt.startTime&&self.tableDataList[index].endTime!=opt.endTime){//这里的作用是限制只能同时下载一个视频
+        return;
+      }
+      if(opt.downLocaling){//视频正在从服务器下载到本地
+        return;
+      }
+      if (opt.downing) {//视频正在从设备上传到服务器
+        if(confirm("视频正在上传中，是否中止?")){
+          opt.press = "已中止";
+          opt.downWattingTime = 15;
           $.get(self.$store.state.baseUrl + "/stopDownload", {
-            d_gb_id: self.d_gb_id,
-            gb_id: self.channelCodestr
-          }).then((ret) => {});
-          self.downloadIndex = "";
+            gbId: self.d_gb_idstr,
+            streamid: opt.dowloadStreamId
+          }).then((ret) => {
+            $.get(self.$store.state.baseUrl + "/getPlatfromPlayBackVideo", {//获取服务器上的媒体地址
+              d_gb_id: self.d_gb_idstr,
+              gb_id: self.gb_idstr,
+              startTime: opt.startTime.replace("T", " "),
+              endTime: opt.endTime.replace("T", " "),
+              connectNumber: opt.connectNumber+opt.timestamp,
+              streamId: opt.dowloadStreamId
+            }).then((ret) => {
+              var obj = eval("(" + ret + ")");
+              if(!!obj.url) {
+                opt.downing = false;
+                opt.url = obj.url;
+                self.downs(opt);
+              }
+            });
+          });
         }
         return;
       }
-      self.setDownloadTime(opt);
-
-      if (typeof opt.url == "undefined") {
-        $.get(self.$store.state.baseUrl + "/getPlatfromPlayBackVideo", {
-          d_gb_id: self.d_gb_id,
-          gb_id: self.channelCodestr,
+      opt.downing = true;
+      if(!opt.url) {//设备视频还未上传至服务器
+        $.get(self.$store.state.baseUrl + "/getPlatfromPlayBackVideo", {//获取服务器上的媒体地址
+          d_gb_id: self.d_gb_idstr,
+          gb_id: self.gb_idstr,
           startTime: opt.startTime.replace("T", " "),
           endTime: opt.endTime.replace("T", " "),
-          connectNumber: self.connectNumber
+          connectNumber: opt.connectNumber,
+          streamId: opt.dowloadStreamId
         }).then((ret) => {
           if (ret === "404") {
-            //服务器查询出错了
+            opt.downing = false;
+            opt.downWattingTime = 15;
           } else {
             try {
-              var self = this;
               var json = JSON.parse(ret);
-              var url = json["url"];
-              if (typeof url == "undefined") {
-	              var code =0;
-	             var timestamp=new Date().getTime();
-                 $.get(self.$store.state.baseUrl + "/fileUpload", {
-                    d_gb_id: self.d_gb_id,
-                    gb_id: self.channelCodestr,
-                    startTime: opt.startTime.replace("T", " "),
-                    endTime: opt.endTime.replace("T", " "),
-                    connectNumber : self.connectNumber+timestamp,
-                    speed: this.form.speed,
-                 }).then((ret2) => {
-                    code = ret2.code;
-                     if(code == -3){
-                        opt.press = "繁忙";
-                        self.$set(self.tableDataList, index, opt);
-                        self.downloadIndex = "";
-                        clearInterval(self.dtimer);
-                        return;
-                     }
-                     self.downloadOpt = opt;
-                     self.downloadIndex = index;
-                     //服务器没有对应的
-                     self.isdevice = true;
-                     opt.press = "0%";
-                     self.$set(self.tableDataList, index, opt);
-                     self.speedTime = 0;
-                     var bfb = 0;
-                     var status =1;
-                     self.dtimer = setInterval(function () {
-                        $.get(self.$store.state.baseUrl + "/queryVideoRecordTime", {
-                           d_gb_id: self.d_gb_id,
-                           gb_id: self.channelCodestr,
-                           startTime: opt.startTime.replace("T", " "),
-                           endTime: opt.endTime.replace("T", " "),
-                           connectNumber: self.connectNumber+timestamp
-                        }).then((ret3) => {
-                            var json = JSON.parse(ret3);
-                            bfb = json["percent"];
-                            status = json["status"];
-                            if(status==-1){
-                                opt.press = "下载失败";
-                                self.$set(self.tableDataList, index, opt);
-                            }
-                            if(status==-1){
-                                self.downloadIndex = "";
-                                clearInterval(self.dtimer);
-                                return;
-                            }
-                            if (bfb >= 100) {
-                                opt.press = "100%";
-                            } else {
-                                opt.press = bfb + "%";
-                            }
-                            self.$set(self.tableDataList, index, opt);
-                            if (bfb >= 100) {
-                                self.getPlatfromPlayBackVideo(opt, index,timestamp);
-                            }
-                        })
-                     }, 5000);
-                 })
+              if (!json["url"]) {
+	              let timestamp = new Date().getTime();
+                $.get(self.$store.state.baseUrl + "/fileUpload", {
+                  d_gb_id: self.d_gb_idstr,
+                  gb_id: self.gb_idstr,
+                  startTime: opt.startTime.replace("T", " "),
+                  endTime: opt.endTime.replace("T", " "),
+                  connectNumber: opt.connectNumber+timestamp,
+                  speed: this.form.speed,
+                }).then((ret2) => {
+                  if(ret2.code == -3){
+                    opt.press = "繁忙";
+                    opt.downing = false;
+                    opt.downWattingTime = 15;
+                    return;
+                  }
+                  opt.dowloadStreamId = ret2.data.streamId;
+                  opt.press = "0%";
+                  opt.timestamp = timestamp;//每次上传都生成一个新的时间戳
+                  self.startDownInterval();
+                })
               } else {
-                opt.url = url;
+                opt.url = json["url"];
+                opt.downing = false;
+                opt.downWattingTime = 15;
                 self.downs(opt);
               }
             } catch (err) {}
           }
         });
       } else {
-        console.log(opt.url);
+        opt.downing = false;
+        opt.downWattingTime = 15;
         self.downs(opt);
       }
     },
-    downs(opt) {
+    startDownInterval(){//启动下载进度监听计时器
+      if(!this.dtimer){
+        let self = this;
+        self.dtimer = setInterval(function () {
+          let needClearDtimer = true;
+          for (let i = 0; i < self.tableDataList.length; i++) {
+            if(self.tableDataList[i].downing){
+              needClearDtimer = false;
+              $.get(self.$store.state.baseUrl + "/queryVideoRecordTime", {//获取设备上传视频到服务器的进度
+                d_gb_id: self.d_gb_idstr,
+                gb_id: self.gb_idstr,
+                startTime: self.tableDataList[i].startTime.replace("T", " "),
+                endTime: self.tableDataList[i].endTime.replace("T", " "),
+                connectNumber: self.tableDataList[i].connectNumber+self.tableDataList[i].timestamp
+              }).then((ret3) => {
+                let json = JSON.parse(ret3);
+                if(json["status"]==-1){
+                  self.tableDataList[i].press = "下载失败";
+                  self.tableDataList[i].downing = false;
+                  self.tableDataList[i].downWattingTime = 15;
+                  return;
+                }
+                if (json["percent"] >= 100) {
+                  if(!!json["url"]){
+                    self.tableDataList[i].url = json["url"];
+                    self.tableDataList[i].downing = false;
+                    self.tableDataList[i].downWattingTime = 15;
+                    self.downs(self.tableDataList[i]);
+                  }else{
+                    self.tableDataList[i].press = "99%";
+                    self.getPlatfromPlayBackVideo(self.tableDataList[i]);
+                  }
+                } else {
+                  self.tableDataList[i].press = json["percent"] + "%";
+                }
+              });
+            }
+          }
+          if(needClearDtimer){
+            clearInterval(self.dtimer);
+            self.dtimer = null;
+          }
+        }, 5000);
+      }
+    },
+    getPlatfromPlayBackVideo(opt) {//获取服务器上的媒体地址
       var self = this;
-      fetch(opt.url)
-        .then((res) => res.blob())
-        .then((blob) => {
-          download(
-            blob,
-            self.channelnamestr + "(" + opt.startTime.replace("T", " ") + "---" + opt.endTime.replace("T", " ") + ").mp4",
-            "video"
-          );
-        });
+      $.get(self.$store.state.baseUrl + "/getPlatfromPlayBackVideo", {
+        d_gb_id: self.d_gb_idstr,
+        gb_id: self.gb_idstr,
+        startTime: opt.startTime.replace("T", " "),
+        endTime: opt.endTime.replace("T", " "),
+        connectNumber: opt.connectNumber+opt.timestamp,
+        streamId: opt.dowloadStreamId
+      }).then((ret) => {
+        var obj = eval("(" + ret + ")");
+        if(!!obj.url) {
+          opt.url = obj.url;
+          opt.downing = false;
+          opt.downWattingTime = 15;
+          self.downs(opt);
+        }else{
+          opt.downWattingTime--;
+          if(opt.downWattingTime<=0){
+            opt.press = "下载失败";
+            opt.downing = false;
+            opt.downWattingTime = 15;
+          }
+        }
+      });
+    },
+    downloadF({url,filename,progress,error}){
+      /**
+      * 下载文件 - 带进度监控
+      * @param url: 文件请求路径
+      * @param filename: 保存的文件名
+      * @param progress: 进度处理回调函数
+      * @param error: 下载失败回调函数
+      * eg: progressDownLoad({url:'http://loacalhost:8080/downLoad.action',filename:'file.rar',progress:function(evt){
+      *        console.log(evt);
+      *     }});
+      **/
+      var xhr = new XMLHttpRequest();
+      xhr.open("get", url, true);
+      //监听进度事件
+      xhr.addEventListener("progress", function (evt) {
+        if(progress) try{ progress(evt); }catch(e){}
+      }, false);
+      xhr.responseType = "blob";
+      xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded; charset=UTF-8");
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if(xhr.status === 200){
+            if (typeof window.chrome !== 'undefined') {
+              // Chrome version
+              var link = document.createElement('a');
+              link.href = window.URL.createObjectURL(xhr.response);
+              link.download = filename;
+              link.click();
+            } else if (typeof window.navigator.msSaveBlob !== 'undefined') {
+              // IE version
+              var blob = new Blob([xhr.response], { type: 'application/force-download' });
+              window.navigator.msSaveBlob(blob, filename);
+            } else {
+              // Firefox version
+              var file = new File([xhr.response], filename, { type: 'application/force-download' });
+              window.open(URL.createObjectURL(file));
+            }
+          }else{
+            if(error) try{ error.call(xhr); }catch(e){}
+          }
+        }
+      };
+      // FormData
+      //var formData = new FormData();
+      var paramsStr = '';
+      if(paramsStr) paramsStr = paramsStr.substring(1);
+      xhr.send(paramsStr);
+    },
+    downs(row) {//下载视频到本地
+      row.downLocaling = true;
+      this.downloadF({
+        url: row.url,
+        filename: 'download-'+row.startTime.replace("T", " ")+'.mp4',
+        progress: function(res){
+          if(row.press!="99%"&&row.press!="100%"||row.press=="已中止"){
+            row.downLocaling = true;
+            row.press = parseInt((res.loaded/res.total)*100)+"%";
+          }else{
+            row.downLocaling = false;
+            row.press = "已完成";
+          }
+        },
+        error: function(res){
+          row.downLocaling = false;
+          row.press = "下载失败";
+        }
+      });
     },
     playerTime(pauseToplay) {//显示的播放时间进度
       var self = this;
@@ -758,7 +849,7 @@ export default {
       self.dragType = 0;
       self.offsetTime = 0;
       let backFunc = function(){
-        self.playerchannelId = self.channelCodestr;
+        self.playerchannelgbId = self.gb_idstr;
         self.playerStartTime = opt.startTime.replace("T", " ");
         self.playerEndTime = opt.endTime.replace("T", " ");
         self.playingType = opt.memoryType;
@@ -767,8 +858,8 @@ export default {
         self.reloadPlayer();
         if (opt.memoryType != 1) {
           $.get(self.$store.state.baseUrl + "/playBack", {
-            d_gb_id: self.d_gb_id,
-            gb_id: self.channelCodestr,
+            d_gb_id: self.d_gb_idstr,
+            gb_id: self.gb_idstr,
             streamType: 0,
             memoryType: opt.memoryType,
             startTime: opt.startTime.replace("T", " "),
@@ -778,15 +869,16 @@ export default {
             if(self.form.record==1){//如果播放的视频类型是设备类型且是边录像边播放，则禁止拖动播放进度条
               self.currentPlayingCanDrag = false;
             }
+            self.streamId = ret.data.StreamID;//ret.data.streamId;
             if(self.isHttps()){
-                self.currentPlayUrl = ret.data.httpsurl;
+                self.currentPlayUrl = ret.data.WebSockets;
             }else{
-                self.currentPlayUrl = ret.data.url;
+                self.currentPlayUrl = ret.data.WebSocket;
             }
             self.startPlay(
               self.currentPlayUrl,
               self.deviceIdstr,
-              self.channelCodestr,
+              self.gb_idstr,
               opt.startTime.replace("T", " "),
               opt.endTime.replace("T", " ")
             );
@@ -795,7 +887,7 @@ export default {
           self.startPlay(
             opt.url,
             self.deviceIdstr,
-            self.channelCodestr,
+            self.gb_idstr,
             opt.startTime.replace("T", " "),
             opt.endTime.replace("T", " ")
           );
@@ -805,7 +897,6 @@ export default {
     },
     isHttps(){
 	    const ishttps = 'https:' == document.location.protocol ? true : false;
-	    var isUrl = 'https';
 	    if(ishttps) {
 	       return true;
 	    } else {
@@ -829,9 +920,6 @@ export default {
     },
     changeHandler(value) {
       this.memoryType = value;
-    },
-    selectChanged(value) {
-      this.gb_id = value;
     },
     searchList() {//点击搜索按钮
       var self = this;
@@ -876,56 +964,9 @@ export default {
       }
       pushL(ts,te);
       self.timeSplitList = list;
-      if (self.memoryType != 1) {//设备类型或者设备+服务器类型
-        self.openSocket();
-      }
       self.searchLoading = true;
       self.tableDataList = [];
       self.searchListAPI();
-    },
-    openSocket() {
-      var self = this;
-      if (typeof WebSocket == "undefined") {
-        self.$message({
-          type: "error",
-          message: "您的浏览器不支持WebSocket",
-        });
-      } else {
-        console.log("您的浏览器支持WebSocket");
-        //实现化WebSocket对象，指定要连接的服务器地址与端口  建立连接
-        var socketUrl = self.$store.state.wsHost + 10;
-        console.log(socketUrl);
-        if (self.socket != null) {
-          self.socket.close();
-          self.socket = null;
-        }
-        self.socket = new WebSocket(socketUrl);
-        //打开事件
-        self.socket.onopen = function () {
-          console.log("websocket已打开");
-          //socket.send("这是来自客户端的消息" + location.href + new Date());
-        };
-        //获得消息事件
-        self.socket.onmessage = function (msg) {
-          var obj = eval("(" + msg.data + ")");
-          // console.log("收到服务端信息：",obj);
-          self.channelnamestr = self.channelname;
-          self.channelCodestr = self.valueId;
-          self.deviceIdstr = self.deviceId;
-          self.tableDataList = self.tableDataList.concat(obj);
-          if(self.memoryType != 1&&self.timeSplitList.length>0) {//设备类型或者设备+服务器类型
-            self.searchListAPI();
-          }
-        };
-        //关闭事件
-        self.socket.onclose = function () {
-          console.log("websocket已关闭");
-        };
-        //发生了错误事件
-        self.socket.onerror = function () {
-          console.log("websocket发生了错误");
-        };
-      }
     },
     searchListAPI(){
       var self = this;
@@ -942,15 +983,28 @@ export default {
       },5000);
       $.get(self.$store.state.baseUrl + "/queryVedioList", {
         d_gb_id: this.d_gb_id,
-        gb_id: this.valueId,
+        gb_id: this.gb_id,
         memoryType: this.memoryType,
         startTime: self.timeSplitList[0].startT,
         endTime: self.timeSplitList[0].endT,
       }).then((ret) => {
         self.channelnamestr = self.channelname;
-        self.channelCodestr = self.valueId;
+        self.d_gb_idstr = self.d_gb_id;
+        self.gb_idstr = self.gb_id;
         self.deviceIdstr = self.deviceId;
-        self.tableDataList = self.tableDataList.concat(eval("(" + ret + ")"));
+        let list = eval("(" + ret + ")");
+        list.forEach(item => {
+          if(self.tableDataList.findIndex(_=>_.startTime==item.startTime||_.endTime==item.endTime)==-1){
+            if(!item.url)item.url = "";
+            item.press = "";
+            item.downing = false;
+            item.downLocaling = false;
+            item.playing = false;
+            item.connectNumber = self.getGuid();//下载时的通道连接编号
+            item.downWattingTime = 15;//下载时的设备类视频下载等待次数，如果查到设备已经上传视频到服务器进度已到达100%，请求获取服务器下载地址的超过它及判定下载失败了
+            self.tableDataList.push(item);
+          }
+        });
         self.timeSplitList.splice(0,1);//查过的去掉
         if(!self.timeSplitList.length){
           self.searchLoading = false;
@@ -1099,31 +1153,6 @@ export default {
         });
       }
     },
-    handleNodeClick(node) {//选中节点
-      if (typeof node.channelname == "undefined") {
-        return;
-      } else {
-        var devicename = "";
-        $.get(this.$store.state.baseUrl + "/deviceInfo/details", {
-          id: node.deviceid,
-        }).then((ret) => {
-          if (ret.code == 0) {
-            devicename = ret.data.devicename;
-            this.devicenameStr = ret.data.devicename;
-          }
-          this.valueTitle = node.deptname; //获取label
-          this.valueId = node.gb_id; //获取value
-          this.deviceId = node.deviceid;
-          this.d_gb_id = node.d_gb_id;
-          this.channelname = node.channelname;
-          this.$emit("getValue", this.valueId); //传值给父组件
-          $("div .is-focus").click();
-          setTimeout(function () {
-            $("#treeselectLi").find("input.el-input__inner").val(devicename + "/" + node.deptname);
-          }, 50);
-        });
-      }
-    },
     setPlayerPlay(val) {//播放控制--按钮
       var self = this;
       if (!self.playerstate) {
@@ -1137,7 +1166,7 @@ export default {
         var ui1 = playease.ui(0);
         if (self.isplay) {
           if (self.playingType != 1) {
-            self.playBackControl(1, self.playerchannelId);
+            self.playBackControl(1, self.playerchannelgbId);
           } else {
             self.isplay = false;
           }
@@ -1145,7 +1174,7 @@ export default {
           ui1.pause();
         } else {
           if (self.playingType != 1) {
-            self.playBackControl(1, self.playerchannelId);
+            self.playBackControl(1, self.playerchannelgbId);
           } else {
             self.isplay = true;
           }
@@ -1168,7 +1197,7 @@ export default {
         }
       } else if (val == 6) {//慢进
         if (self.playingType != 1) {//设备
-          self.playBackControl(6, self.playerchannelId);
+          self.playBackControl(6, self.playerchannelgbId);
         }else{//服务器
           let video = playease.ui(0).element();
           let rate = 1;
@@ -1186,7 +1215,7 @@ export default {
         }
       } else if (val == 7) {//快进
         if (self.playingType != 1) {//设备
-          self.playBackControl(7, self.playerchannelId);
+          self.playBackControl(7, self.playerchannelgbId);
         }else{//服务器
           let video = playease.ui(0).element();
           let rate = 1;
@@ -1234,8 +1263,9 @@ export default {
         self.dragWaitting = true;
         self.playWattingTime = 180;
         $.get(self.$store.state.baseUrl + "/playBackControl", {
-          d_gb_id: self.d_gb_id,
-          gb_id: self.playerchannelId,
+          d_gb_id: self.d_gb_idstr,
+          gb_id: self.playerchannelgbId,
+          streamId: self.streamId,
           cmd: 4,
           param: index,
         }).then((ret) => {
@@ -1283,10 +1313,8 @@ export default {
     setrightbtnshow(type) {
       if (type == 1) {
         this.showplayertable = true;
-        this.showdownloadtable = false;
       } else if (type == 2) {
         this.showplayertable = false;
-        this.showdownloadtable = true;
       }
     },
     toStop(callbackF) {//停止
@@ -1301,8 +1329,9 @@ export default {
         self.currentPlayingCanDrag = true;
         if (self.playingType != 1) {
           $.get(self.$store.state.baseUrl + "/playBackControl", {
-            d_gb_id: self.d_gb_id,
-            gb_id: self.playerchannelId,
+            d_gb_id: self.playerchannelgbId,
+            gb_id: self.playerchannelgbId,
+            streamId: self.streamId,
             cmd: 0,
             param: 0,
           }).then((ret) => {
@@ -1311,7 +1340,7 @@ export default {
             self.fFstate = 0;
             ui1.stop();
             if(!!callbackF){
-              if(self.valueId==self.playerchannelId){//要重新播放的是同一个视频，需要加个延时时间给设备反应
+              if(self.gb_id==self.playerchannelgbId){//要重新播放的是同一个视频，需要加个延时时间给设备反应
                 setTimeout(function(){callbackF();},3000);
               }else{
                 callbackF();
@@ -1362,9 +1391,6 @@ export default {
         } else if (playerNum == 64) {
           $("#player" + i).attr("class", "col-smxx-8");
         }
-        var ui3 = playease.ui(i);
-        ui3.play("ws://www.car-eye.cn:4025/ws?port=10077&app=live&stream=13751093611_channel_2");
-        ui3.stop();
       }
     },
     flv_screenshot(i) {
@@ -1431,9 +1457,10 @@ export default {
         cmd = 2;
       }
       $.get(self.$store.state.baseUrl + "/playBackControl", {
-        d_gb_id: self.d_gb_id,
+        d_gb_id: self.playerchannelgbId,
         gb_id: channelid,
         cmd: cmd,
+        streamId: self.streamId,
         param: paramvalues,
       }).then((ret) => {});
     },

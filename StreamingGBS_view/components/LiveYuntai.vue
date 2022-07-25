@@ -1,6 +1,5 @@
 <template>
     <div class="ctr-box">
-        <i class="fa fa-times-circle" style="display:none;" @click="toHide()" aria-hidden="true" title="关闭云台控制"></i>
         <div class="ctr1">
             <div class="row">
                 <div class="col-lg-offset-2 col-lg-3 col-xs-4 col-md-4 divmd" @mousedown="setYdControl(1)" @mouseup="setYdUpControl(1)"
@@ -152,9 +151,6 @@
             $("#liveyuntai").find("div.modal-footer").remove();
         },
         methods: {
-            toHide(){
-                // this.$emit("hidefunc");
-            },
             defForm() {
                 return {
                     deviceId: '',

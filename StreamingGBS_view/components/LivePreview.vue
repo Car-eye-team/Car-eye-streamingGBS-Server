@@ -6,7 +6,7 @@
           style="overflow:auto;margin:auto;" :filter-node-method="treeFilter" lazy :default-expanded-keys="defaultExpandedKeys"
           @node-click="treeNodeClick" @node-contextmenu="treeNodeRightClick">
             <span class="custom-tree-node" slot-scope="{node, data}">
-              <span> <!--:class="{'text-green': data.subCount === 0||data.channels===0}"'fa-taxi': typeof data.devicename != 'undefined'&&data.online===1-->
+              <span>
                 <i :class="['fa', {'fa-sitemap':typeof data.parentid != 'undefined'&&typeof data.channelname == 'undefined',
                   'fa-server': data.device && typeof data.channelname == 'undefined',
                   'fa-camera channeloffline':typeof data.channelname != 'undefined' && data.status === 0 && !data.type,
@@ -41,21 +41,12 @@
         <a href="javascript:;" @click="refresh()" v-show="popup==3" style="color: #000000;">
           <i class="fa fa-refresh"></i>刷新状态
         </a>
-        <!--<a href="javascript:;" @click="stopAll" style="color: #000000;" v-show="popup==1">-->
-        <!--<i class="fa fa-hand-o-right"></i> 关闭全部-->
-        <!--</a>-->
         <a href="javascript:;" @click="playOne()" style="color: #000000;" v-show="popup==2">
           <i class="fa fa-camera"></i> 通道预览
-        </a>
-        <a href="javascript:;" @click="takePhoto()" style="color: #000000;" v-show="popup==2">
-           <i class="fa fa-camera"></i> 下发拍照
         </a>
         <a href="javascript:;" @click="voiceintercom" style="color: #000000;" v-show="popup==2">
           <i class="fa fa-microphone"></i> 开启对讲
         </a>
-        <!-- <a href="javascript:;" @click="setYuntai" style="color: #000000;" v-show="popup==2">
-          <i class="fa fa-mixcloud"></i> 云台设置
-        </a> -->
         <a href="javascript:;" @click="gbControl" style="color: #000000;" v-show="popup==2">
           <i class="fa fa-hand-o-right"></i> 设备控制
         </a>
@@ -75,7 +66,6 @@
             <img class="btnmenulist" src="../assets/images/closebtn.png"/>
             <VueContextMenu class="right-menu" :show="showstop">
               <a href="javascript:;" @click="stopAll" style="color: #000000;">
-                <!--<i class="fa fa-stop-circle"></i>-->
                 关闭所有视频
               </a>
             </VueContextMenu>
@@ -101,7 +91,6 @@
     import "assets/css/classic.css";
     import "assets/css/style.css";
     import {
-      mapState,
       mapActions
     } from "vuex"
     import {component as VueContextMenu} from '@xunlei/vue-context-menu'
@@ -142,7 +131,7 @@
           d_gb_id: '',
           channelcount: 0,
           showstop: false,
-          terminals: new Array(),//用于存放播放中的设备信息[{deviceid,id,d_gb_id,gb_id,channelname,status,index}...]
+          terminals: new Array(),//用于存放播放中的设备信息[{deviceid,id,boxId,d_gb_id,gb_id,channelname,status,index,streamid,sinkid}...]
           logoimg: logo,
           defaultExpandedKeys: [],
           record: 0,
@@ -206,12 +195,7 @@
             deviceId: "",
             d_gb_id: "",
             channelId: ""
-          },
-          // yuntaiCtrData: {
-          //   deviceId: "766717310491820032",
-          //   d_gb_id: "34020000001320000098",
-          //   channelId: "34020000001310000099"
-          // },//云台控制参数
+          }
         };
       },
       computed: {
@@ -245,65 +229,36 @@
         }
       },
       mounted() {
-        // var eleheight = (window.innerHeight * 0.55).toFixed(2) + "px";
-        // $("#dev-tree").css("max-height", eleheight);
         if (this.isMobile()) {//屏幕跟树的位置互换
-          // $("#depttree").after($("#playDiv"));
           this.$el.querySelector("#depttree").before(this.$el.querySelector("#playDiv"));
           $("#thebox").addClass("ismobile");
         }
         this.contextMenuTarget = document.querySelector('#tab-tree-wrapper');
         $("#car-eye-player").html("");
-        for (var i = 0; i < 64; i++) {//<a onclick='choseplayer("+i+")'></a>
+        for (let i = 0; i < 64; i++) {
           $("#car-eye-player").append("<div class='col-smxx-8 listerclick' id='player" + i + "' style='display:none;'></div>");
           this.playerrestart("", "player" + i, i);
           $("#player" + i).find("div.pe-logo").remove();
         }
         this.setPlayerLength(this.playerLength);
-        let that = this;
-        $("#car-eye-player .pe-controlbar").find(".pe-button.stop").click(function(e){
-          console.log("我监听到了播放器的停止按钮了",e);
-          e.stopPropagation();    //  阻止事件冒泡
-          that.stopPlayApi(that.currentStopIndex);
-        });
-        $("#car-eye-player .listerclick").click(function(e){
-          e.stopPropagation();    //  阻止事件冒泡
-          if(e.currentTarget.parentNode.children.length>0){
-            for (let i = 0; i < e.currentTarget.parentNode.children.length; i++) {
-              if(e.currentTarget.parentNode.children[i].id===e.currentTarget.id){
-                if(e.currentTarget.parentNode.children[i].className.indexOf("choice")==-1){
-                  e.currentTarget.parentNode.children[i].className += " choice";
-                }
-              }else if(e.currentTarget.parentNode.children[i].className.indexOf("choice")>-1){
-                e.currentTarget.parentNode.children[i].className = e.currentTarget.parentNode.children[i].className.replace("choice","");
-              }
-            }
-          }
-          that.clickScreen(parseInt(e.currentTarget.id.split("player")[1]));
-        });
-
-
-        // let keepIn = that.$store.state.keepTime;
-        // that.keepSiv = setInterval(function(){
-        //   keepIn--;
-        //   if(keepIn<=0){
-        //     that.keepLogin().then(res=>{keepIn = that.$store.state.keepTime;});
-        //   }
-        // },1000);
+        this.initPlayerEvent();
       },
       methods: {
         ...mapActions([
           "keepLogin"
         ]),
-        playerrestart(fileurl, playerid, val) {//初始化播放器，只调用一次
+        playerrestart(fileurl, playerid, val, isrestart) {//初始化播放器
           var container = document.getElementById(playerid);
           var ui = playease.ui(val);
-          this.terminals.push({
-            index: val
-          });
+          if(!isrestart){
+            this.terminals.push({
+              index: val,
+              boxId: playerid
+            });
+          }
           ui.setup(container, {
             autoplay: false,
-            bufferLength: 0.5,       // sec.
+            bufferLength: 0,//0.5,       // sec.
             // level: 'error',    // debug, log, warn, error
             file: fileurl,
             lowlatency: true,//false为服务器的点播功能
@@ -312,7 +267,7 @@
             mode: "live", //live
             module: 'FLV',
             objectfit: "fill",
-            retrying: 3000,
+            retrying: 200,
             loader: {
               name: 'auto',
               mode: 'cors',        // cors, no-cors, same-origin
@@ -325,6 +280,9 @@
             },
             plugins: [
               {
+                kind: 'Logo',
+                visibility: false
+              },{
                 kind: 'Poster',
                 file: this.logoimg,
                 objectfit: 'contain', // fill, contain, cover, none, scale-down
@@ -336,7 +294,7 @@
                 visibility: true
               },{
                 kind: 'Controlbar',
-                layout: '||[Slider:timebar=Preview]|[Button:play=播放][Button:pause=暂停][Button:stop=停止][Button:reload=重新加载][Button:capture=拍照][Button:mute=静音][Button:unmute=取消静音][Slider:volumebar=80][Button:fullscreen=全屏][Button:exitfullscreen=退出全屏]',
+                layout: '||[Slider:timebar=Preview]|[Button:play=播放][Button:pause=暂停][Button:stop=停止][Button:reload=重新加载][Button:capture=拍照][Button:video=录像][Button:mute=静音][Button:unmute=取消静音][Slider:volumebar=80][Button:fullscreen=全屏][Button:exitfullscreen=退出全屏]',
                 autohide: false,
                 visibility: true,
               },{
@@ -425,6 +383,110 @@
           }
           this.lastnum = playerNum;
           this.playerLength = playerNum;
+        },
+        initPlayerEvent(){
+          let that = this;
+          $("#car-eye-player .pe-controlbar").find(".pe-button.stop").click(function(e){
+            e.stopPropagation();    //  阻止事件冒泡
+            that.stopPlayApi(that.currentStopIndex);
+          });
+          $("#car-eye-player .pe-controlbar").find(".pe-button.video").click(function(e){
+            e.stopPropagation();  //  阻止事件冒泡
+            let boxId = e.target.parentNode.parentNode.parentNode.parentNode.parentNode.id;
+            let screenIdx = that.terminals.findIndex(_=>_.boxId==boxId);
+            if(screenIdx>-1&&e&&e.target&&e.target.classList){
+              if(e.target.className.indexOf("ing")>-1&&that.terminals[screenIdx].sinkid){
+                e.target.classList.remove("ing");
+                $(e.target.childNodes[0]).text("录像");
+                let params_ = {
+                  sinkid: that.terminals[screenIdx].sinkid,
+                  dGbId: that.terminals[screenIdx].d_gb_id,
+                  gbId: that.terminals[screenIdx].gb_id
+                };
+                $.post(that.$store.state.baseUrl + '/stop/video', params_).then(ret => {
+                    if(!ret.code){
+                      that.terminals[screenIdx].sinkid = "";
+                      if(ret.data){
+                        let filename = ret.data.split("/");
+                        filename = filename[filename.length-1].split(".")[0];
+                        that.downloadF({url:"https://"+ret.data,filename:filename});
+                      }
+                    }else{
+                      that.$message({
+                        message: data.msg,
+                        type: 'warning',
+                      });
+                    }
+                });
+              }else if(e.target.className.indexOf("ing")==-1&&that.terminals[screenIdx].streamid){
+                e.target.classList.add("ing");
+                $(e.target.childNodes[0]).text("停止录像");
+                $.post(that.$store.state.baseUrl + '/start/video', {streamid: that.terminals[screenIdx].streamid}).then(ret => {
+                    if(!ret.code){
+                      that.terminals[screenIdx].sinkid = ret.data;
+                    }else{
+                      that.$message({
+                        message: data.msg,
+                        type: 'warning',
+                      });
+                    }
+                });
+              }
+            }  
+          });
+          $("#car-eye-player .listerclick").click(function(e){
+            e.stopPropagation();    //  阻止事件冒泡
+            if(e.currentTarget.parentNode.children.length>0){
+              for (let i = 0; i < e.currentTarget.parentNode.children.length; i++) {
+                if(e.currentTarget.parentNode.children[i].id===e.currentTarget.id){
+                  if(e.currentTarget.parentNode.children[i].className.indexOf("choice")==-1){
+                    e.currentTarget.parentNode.children[i].className += " choice";
+                  }
+                }else if(e.currentTarget.parentNode.children[i].className.indexOf("choice")>-1){
+                  e.currentTarget.parentNode.children[i].className = e.currentTarget.parentNode.children[i].className.replace("choice","");
+                }
+              }
+            }
+            that.clickScreen(parseInt(e.currentTarget.id.split("player")[1]));
+          });
+        },
+        downloadF({url,filename}){
+          /**
+          * 下载文件 - 带进度监控
+          * @param url: 文件请求路径
+          * @param filename: 保存的文件名
+          **/
+          // console.log(url,filename);
+          var xhr = new XMLHttpRequest();
+          xhr.open("get", url, true);
+          xhr.responseType = "blob";
+          xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded; charset=UTF-8");
+          xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+              if(xhr.status === 200){
+                if (typeof window.chrome !== 'undefined') {
+                  // Chrome version
+                  var link = document.createElement('a');
+                  link.href = window.URL.createObjectURL(xhr.response);
+                  link.download = filename;
+                  link.click();
+                } else if (typeof window.navigator.msSaveBlob !== 'undefined') {
+                  // IE version
+                  var blob = new Blob([xhr.response], { type: 'application/force-download' });
+                  window.navigator.msSaveBlob(blob, filename);
+                } else {
+                  // Firefox version
+                  var file = new File([xhr.response], filename, { type: 'application/force-download' });
+                  window.open(URL.createObjectURL(file));
+                }
+              }
+            }
+          };
+          // FormData
+          //var formData = new FormData();
+          var paramsStr = '';
+          if(paramsStr) paramsStr = paramsStr.substring(1);
+          xhr.send(paramsStr);
         },
         isshowstop() {//关闭所有视频按钮的显示隐藏
           if (this.showstop) {
@@ -528,10 +590,11 @@
                   if(online ==1){
                       var url;
                       if(self.isHttps()){
-                          url = data.data.httpsurl;
+                        url = data.data.WebSockets;
                       }else{
-                          url = data.data.url;
+                        url = data.data.WebSocket;
                       }
+                      self.terminals[screenIdx].streamid = data.data.StreamID;
                       let ui2 = playease.ui(self.terminals[screenIdx].index);
                       ui2.stop();
                       setTimeout(function(){
@@ -555,37 +618,17 @@
             }
           })
         },
-            downs(opt) {
-              var self = this;
-              fetch(opt.url)
-                .then((res) => res.blob())
-                .then((blob) => {
-                  download(
-                    blob,
-                    self.nodechannelname,
-                    "jpg"
-                  );
-                });
-            },
-
-        takePhoto(){
-              let self = this;
-              $.get(self.$store.state.baseUrl + "/takePhoto", {
-                d_gb_id: self.d_gb_id,
-                gb_id: self.nodechannelcode,
-              }).then(ret => {
-                  var status =ret.data.status;
-                  var opt={};
-                  if(status==0){
-                    opt.url = ret.data.url;
-                    opt.nodechannelname = self.nodechannelname;
-                    self.downs(opt);
-                    this.$message.success({
-                        message: '拍照成功',
-                        center: true
-                    });
-                  }
-              })
+        downs(opt) {
+          var self = this;
+          fetch(opt.url)
+            .then((res) => res.blob())
+            .then((blob) => {
+              download(
+                blob,
+                self.nodechannelname,
+                "jpg"
+              );
+            });
         },
         playOne() {//播放
           let self = this;
@@ -646,43 +689,58 @@
             }
             var online =ret.data.online;
             if(online==1){
-                var url;
-                if(self.isHttps()){
-                    url = ret.data.httpsurl;
-                }else{
-                    url = ret.data.url;
-                }
-                self.contextMenuVisible = false;
-                let ui2 = playease.ui(self.terminals[screenIdx].index);
-                ui2.stop();
-                setTimeout(function(){
-                  ui2.play(url);
+              var url;
+              if(self.isHttps()){
+                url = ret.data.WebSockets;
+              }else{
+                url = ret.data.WebSocket;
+              }
+              self.contextMenuVisible = false;
+              self.terminals[screenIdx].streamid = ret.data.StreamID;
+              let ui2 = playease.ui(self.terminals[screenIdx].index);
+              ui2.stop();
+              setTimeout(function(){
+                ui2.play(url);
+              },1000);
+              $("#player" + self.terminals[screenIdx].index).find("div#souga").remove();
+              let souga = "<div id='souga' style='position: absolute; left:10px;color:#FFFFFF;top: 50%;font-size: 1vh;width: auto;'>" + self.terminals[screenIdx].channelname + "</div>";
+              $("#player" + self.terminals[screenIdx].index).find("div.pe-controlbar").append(souga);
+              if(!self.keepSiv){//保持登录
+                let keepIn = self.$store.state.keepTime;
+                self.keepSiv = setInterval(function(){
+                  keepIn--;
+                  if(keepIn<=0){
+                    self.keepLogin().then(res=>{keepIn = self.$store.state.keepTime;});
+                  }
                 },1000);
-                $("#player" + self.terminals[screenIdx].index).find("div#souga").remove();
-                let souga = "<div id='souga' style='position: absolute; left:10px;color:#FFFFFF;top: 50%;font-size: 1vh;width: auto;'>" + self.terminals[screenIdx].channelname + "</div>";
-                $("#player" + self.terminals[screenIdx].index).find("div.pe-controlbar").append(souga);
-                if(!self.keepSiv){//保持登录
-                  let keepIn = self.$store.state.keepTime;
-                  self.keepSiv = setInterval(function(){
-                    keepIn--;
-                    if(keepIn<=0){
-                      self.keepLogin().then(res=>{keepIn = self.$store.state.keepTime;});
-                    }
-                  },1000);
-                }
+              }
             }
           })
         },
         stopPlayApi(index){//调用停止播放接口
           let that = this;
           $("#player" + that.terminals[index].index).find("div#souga").remove();
-          $.get(that.$store.state.baseUrl + "/playControl", {
-            d_gb_id: that.terminals[index].d_gb_id,
-            gb_id: that.terminals[index].gb_id,
-            command: 0
-          }).then(ret => {});
-          that.terminals[index] = {index: index};
+          // $.get(that.$store.state.baseUrl + "/playControl", {//目前停止播放接口有问题
+          //   d_gb_id: that.terminals[index].d_gb_id,
+          //   gb_id: that.terminals[index].gb_id,
+          //   command: 0
+          // }).then(ret => {});
+          let temp = {
+            index: index,
+            boxId: that.terminals[index].boxId
+          };
+          that.terminals[index] = temp;
           that.yuntaiCtrData = {};
+          let ui = playease.ui(temp.index);
+          ui.destroy();
+          that.playerrestart("",temp.boxId,temp.index,true);
+          $("#" + temp.boxId).find("div.pe-logo").remove();
+          $("#" + temp.boxId).find("div.pe-poster").css("height", "20%");
+          $("#" + temp.boxId).find("div.pe-poster").css("margin-top", "22%");
+          $("#" + temp.boxId).find("div.pe-poster").css("width", "15%");
+          $("#" + temp.boxId).find("div.pe-poster").css("margin-left", "42%");
+          $("#" + temp.boxId).find("div.pe-poster").css("vertical-align", "middle");
+          that.initPlayerEvent();
         },
         stopAll() {//停止全部
           var self = this;
@@ -765,21 +823,11 @@
           }
         },
         clickScreen(index){
-          console.log("我点击了视频窗口",index);
           this.currentChoiceScreen = index;
           this.yuntaiCtrData = {
             deviceId: this.terminals[index].deviceid,
             d_gb_id: this.terminals[index].d_gb_id,
             channelId: this.terminals[index].gb_id
-          };
-        },
-        setYuntai() {//弃用
-          var self = this;
-          self.contextMenuVisible = false;
-          self.yuntaiCtrData = {
-            deviceId: self.nodedeviceid,
-            d_gb_id: self.d_gb_id,
-            channelId: self.nodechannelcode
           };
         },
         gbControl() {

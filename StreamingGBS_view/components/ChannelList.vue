@@ -9,9 +9,6 @@
           </div>
           <div class="box-body box-search">
             <form class="form-inline" autocomplete="off" spellcheck="false">
-              <!-- <div class="form-group form-group-sm">
-              </div>
-              <span class="hidden-xs">&nbsp;&nbsp;</span> -->
               <div class="form-group form-group-sm">
                 <label>搜索</label>
                 <input type="text" class="form-control" placeholder="关键字" v-model.trim="q" @change="getChannels" @keydown.enter.prevent ref="q">
@@ -134,25 +131,10 @@ export default {
   computed: {
     ...mapState(['userInfo', 'buttons']),
   },
-  watch: {
-    // q: function(newVal, oldVal) {
-    //   this.doDelaySearch();
-    // },
-    // online: function(newVal, oldVal) {
-    //   this.doSearch();
-    // },
-    // type: function(newVal, oldVal) {
-    //   this.doSearch();
-    // },
-    // currentPage: function(newVal, oldVal) {
-    //   this.doSearch(newVal);
-    // }
-  },
   components: {
     ChannelAddDlg,ChannelEditDlg
   },
   mounted() {
-    // this.$refs["q"].focus();
     this.getDeviceInfo();
     this.getChannels();
   },
@@ -165,19 +147,6 @@ export default {
     isMobile() {
       return videojs.browser.IS_IOS || videojs.browser.IS_ANDROID;
     },
-    // doSearch(page = 1) {
-    //   var query = {};
-    //   if (this.q) query["q"] = this.q;
-    //   if (this.online) query["online"] = this.online;
-    //   if (this.type) query["type"] = this.type;
-    //   this.$router.replace({
-    //     path: `/devices/channels/${this.deviceid}/${page}`,
-    //     query: query
-    //   });
-    // },
-    // doDelaySearch: _.debounce(function() {
-    //   this.doSearch();
-    // }, 500),
     getChannels() {
       $.get(this.$store.state.baseUrl + "/deviceChannelInfo/list", {
         deviceid: this.deviceid,
@@ -245,24 +214,8 @@ export default {
       });
     }
   },
-  // beforeRouteEnter(to, from, next) {
-  //   next(vm => {
-  //     vm.q = to.query.q || "";
-  //     vm.online = to.query.online || "";
-  //     vm.type = to.query.type || "";
-  //     vm.currentPage = parseInt(to.params.page) || 1;
-  //   });
-  // },
   beforeRouteUpdate(to, from, next) {
     next();
-    // this.$nextTick(() => {
-    //   this.q = to.query.q || "";
-    //   this.online = to.query.online || "";
-    //   this.type = to.query.type || "";
-    //   this.currentPage = parseInt(to.params.page) || 1;
-    //   this.channels = [];
-    //   this.getChannels();
-    // });
   }
 };
 </script>
