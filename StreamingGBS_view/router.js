@@ -20,7 +20,7 @@ const MenuList = () => import('components/MenuList.vue')
 
 const LivePreview = () => import( 'components/LivePreview.vue')
 const HistoricalVideo = () => import('components/HistoricalVideo.vue')
-
+const SipServer = () => import('components/SipServerList.vue')
 const AlarmList = () => import('components/AlarmList.vue')
 
 const DeviceTypeList = () => import('components/DeviceTypeList.vue')
@@ -148,6 +148,9 @@ const router = new Router({
                 path: 'historical',
                 component: HistoricalVideo
             }, {
+                path: 'sipServer',
+                component: SipServer
+            },{
                 path: 'logout',
                 async beforeEnter(to, from, next) {
                     await store.dispatch("logout");

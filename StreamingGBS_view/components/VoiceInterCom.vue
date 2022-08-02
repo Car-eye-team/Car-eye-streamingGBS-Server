@@ -83,7 +83,7 @@
                 })
             },
             initPlayVoice() {
-              ui = playease.ui(10089);
+              ui = careyeplay.ui(10089);
               ui.setup(document.getElementById("player10089"), {
                 autoplay: false,
                 bufferLength: 0,//1.5,       // sec.

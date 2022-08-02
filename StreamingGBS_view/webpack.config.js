@@ -35,13 +35,13 @@ module.exports = {
         }
     },
     devServer: {
-        host: '0.0.0.0',
+        host: 'localhost',
         open: false,
-        port: 8089,
-        useLocalIp: true,
+        port: 8090,
+        useLocalIp: false,
         proxy: {
             "*": {
-                target: 'http://117.78.22.17:10088',
+                target: 'https://www.liveoss.com:10000',
                 secure: false
             }
         }

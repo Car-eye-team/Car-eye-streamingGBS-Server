@@ -120,36 +120,12 @@ export default {
     ...mapState(["userInfo", "buttons"])
   },
   mounted() {
-    // this.$refs["q"].focus();
     this.getSipServerList();
-  },
-  watch: {
-    // q: function(newVal, oldVal) {
-    //   this.doDelaySearch();
-    // },
-    // online: function(newVal, oldVal) {
-    //   this.doSearch();
-    // },
-    // currentPage: function(newVal, oldVal) {
-    //   this.doSearch(newVal);
-    // },
   },
   methods: {
     isMobile() {
       return videojs.browser.IS_IOS || videojs.browser.IS_ANDROID;
     },
-    // doSearch(page = 1) {
-    //   var query = {};
-    //   if (this.q) query["q"] = this.q;
-    //   if (this.online) query["online"] = this.online;
-    //   this.$router.replace({
-    //     path: `/sipServer/${page}`,
-    //     query: query
-    //   });
-    // },
-    // doDelaySearch: _.debounce(function() {
-    //   this.doSearch();
-    // }, 500),
     getSipServerList() {
       this.loading = true;
       $.get(this.$store.state.baseUrl + "/sipServer/list", {
@@ -232,25 +208,11 @@ export default {
       return "";
     },
   },
-  // beforeRouteEnter(to, from, next) {
-  //   next(vm => {
-  //     vm.q = to.query.q || "";
-  //     vm.online = to.query.online || "";
-  //     vm.currentPage = parseInt(to.params.page) || 1;
-  //   });
-  // },
   beforeRouteLeave(to, from, next) {
     next();
   },
   beforeRouteUpdate(to, from, next) {
     next();
-    // this.$nextTick(() => {
-    //   this.q = to.query.q || "";
-    //   this.online = to.query.online || "";
-    //   this.currentPage = parseInt(to.params.page) || 1;
-    //   this.datas = [];
-    //   this.getSipServerList();
-    // });
   }
 };
 </script>

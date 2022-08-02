@@ -169,7 +169,7 @@ import "assets/css/style.css";
 import { component as VueContextMenu } from "@xunlei/vue-context-menu";
 import ElementUI, { Switch } from "element-ui";
 import logo from "../assets/images/logo.png";
-
+var dwt = 15;//下载时的设备类视频下载等待次数
 export default {
   components: { VueContextMenu, ElementUI },
   data() {
@@ -266,7 +266,7 @@ export default {
         //   downLocaling: false,//是否正在下载到本地
         //   dowloadStreamId: "",
         //   connectNumber :"1",//下载时的通道连接编号
-        //   downWattingTime: 15,//下载时的设备类视频下载等待次数，如果查到设备已经上传视频到服务器进度已到达100%，请求获取服务器下载地址的超过它及判定下载失败了
+        //   downWattingTime: dwt,//下载时的设备类视频下载等待次数，如果查到设备已经上传视频到服务器进度已到达100%，请求获取服务器下载地址的超过它及判定下载失败了
         // }
       ],
       channelnamestr: "",//查询出的通道名称
@@ -429,23 +429,19 @@ export default {
       $("#player0").find("div.pe-display").css("height", "calc(100% - 0px)");
       $("#player0").find("div.pe-content").css("height", "calc(100% - 0px)");
       $("#startTime").css("font-size", "1.5vh");
-      $("#player0").find("div.pe-poster").css("width", "11%");
-      $("#player0").find("div.pe-poster").css("margin-top", "16%");
-      $("#player0").find("div.pe-poster").css("height", "22%");
-      $("#player0").find("div.pe-poster").css("margin-left", "42%");
-      $("#player0").find("div.pe-poster").css("vertical-align", "middle");
     },
     playerrestart(fileurl, playerid, val) {
       let self = this;
       var container = document.getElementById(playerid);
-      var ui =playease.ui(val);
+      var ui =careyeplay.ui(val);
       ui.setup(container, {
         autoplay: false,
-        bufferLength: 2.5,//1.5,       // sec.
         // level: 'error',    // debug, log, warn, error
         file: fileurl,
         lowlatency: self.playingType!=1?true:false,//false为服务器的点播功能
-        maxBufferLength: 3.5,//3.0,    // sec.
+        bufferLength: 0,//2.5,//1.5,       // sec.
+        maxBufferLength: 1.5,//3.5,//3.0,    // sec.
+        maxPlaybackLength: 15,
         maxRetries: 10,//1, 
         mode: "live", //live
         module: 'FLV',
@@ -548,7 +544,7 @@ export default {
       if (opt.downing) {//视频正在从设备上传到服务器
         if(confirm("视频正在上传中，是否中止?")){
           opt.press = "已中止";
-          opt.downWattingTime = 15;
+          opt.downWattingTime = dwt;
           $.get(self.$store.state.baseUrl + "/stopDownload", {
             gbId: self.d_gb_idstr,
             streamid: opt.dowloadStreamId
@@ -584,7 +580,7 @@ export default {
         }).then((ret) => {
           if (ret === "404") {
             opt.downing = false;
-            opt.downWattingTime = 15;
+            opt.downWattingTime = dwt;
           } else {
             try {
               var json = JSON.parse(ret);
@@ -601,7 +597,13 @@ export default {
                   if(ret2.code == -3){
                     opt.press = "繁忙";
                     opt.downing = false;
-                    opt.downWattingTime = 15;
+                    opt.downWattingTime = dwt;
+                    return;
+                  }
+                  if(!ret2.data||ret2.data=="null"){
+                    opt.press = "下载失败";
+                    opt.downing = false;
+                    opt.downWattingTime = dwt;
                     return;
                   }
                   opt.dowloadStreamId = ret2.data.streamId;
@@ -612,7 +614,7 @@ export default {
               } else {
                 opt.url = json["url"];
                 opt.downing = false;
-                opt.downWattingTime = 15;
+                opt.downWattingTime = dwt;
                 self.downs(opt);
               }
             } catch (err) {}
@@ -620,7 +622,7 @@ export default {
         });
       } else {
         opt.downing = false;
-        opt.downWattingTime = 15;
+        opt.downWattingTime = dwt;
         self.downs(opt);
       }
     },
@@ -643,17 +645,23 @@ export default {
                 if(json["status"]==-1){
                   self.tableDataList[i].press = "下载失败";
                   self.tableDataList[i].downing = false;
-                  self.tableDataList[i].downWattingTime = 15;
+                  self.tableDataList[i].downWattingTime = dwt;
                   return;
                 }
                 if (json["percent"] >= 100) {
                   if(!!json["url"]){
                     self.tableDataList[i].url = json["url"];
                     self.tableDataList[i].downing = false;
-                    self.tableDataList[i].downWattingTime = 15;
+                    self.tableDataList[i].downWattingTime = dwt;
                     self.downs(self.tableDataList[i]);
                   }else{
                     self.tableDataList[i].press = "99%";
+                    // if(self.tableDataList[i].downWattingTime==13){//三次获取不到就调用中止接口
+                    //   $.get(self.$store.state.baseUrl + "/stopDownload", {
+                    //     gbId: self.d_gb_idstr,
+                    //     streamid: self.tableDataList[i].dowloadStreamId
+                    //   });
+                    // }
                     self.getPlatfromPlayBackVideo(self.tableDataList[i]);
                   }
                 } else {
@@ -683,14 +691,14 @@ export default {
         if(!!obj.url) {
           opt.url = obj.url;
           opt.downing = false;
-          opt.downWattingTime = 15;
+          opt.downWattingTime = dwt;
           self.downs(opt);
         }else{
           opt.downWattingTime--;
           if(opt.downWattingTime<=0){
             opt.press = "下载失败";
             opt.downing = false;
-            opt.downWattingTime = 15;
+            opt.downWattingTime = dwt;
           }
         }
       });
@@ -776,7 +784,7 @@ export default {
         if(keepIn<=0){
           self.keepLogin().then(res=>{keepIn = self.$store.state.keepTime;});
         }
-        var ui2 = playease.ui(0);
+        var ui2 = careyeplay.ui(0);
         var video = ui2.element();
         var playerTime = parseInt(video.currentTime);
         // console.log("显示的播放时间进度===",self.valuepress,playerTime);
@@ -906,7 +914,7 @@ export default {
     },
     startPlay(url, deviceId, channelId, startTime, endTime) {//table的播放按钮-2
       var height = $("#player0").height();
-      var ui2 = playease.ui(0);
+      var ui2 = careyeplay.ui(0);
       ui2.stop();
       ui2.play(url);
       this.playerTime();
@@ -1001,7 +1009,7 @@ export default {
             item.downLocaling = false;
             item.playing = false;
             item.connectNumber = self.getGuid();//下载时的通道连接编号
-            item.downWattingTime = 15;//下载时的设备类视频下载等待次数，如果查到设备已经上传视频到服务器进度已到达100%，请求获取服务器下载地址的超过它及判定下载失败了
+            item.downWattingTime = dwt;//下载时的设备类视频下载等待次数，如果查到设备已经上传视频到服务器进度已到达100%，请求获取服务器下载地址的超过它及判定下载失败了
             self.tableDataList.push(item);
           }
         });
@@ -1163,7 +1171,7 @@ export default {
         return;
       }
       if (val == 1) {//暂停或者播放
-        var ui1 = playease.ui(0);
+        var ui1 = careyeplay.ui(0);
         if (self.isplay) {
           if (self.playingType != 1) {
             self.playBackControl(1, self.playerchannelgbId);
@@ -1187,7 +1195,7 @@ export default {
       } else if (val == 4) {//拍照
         self.flv_screenshot(0);
       } else if (val == 5) {//静音或者非静音
-        var ui1 = playease.ui(0);
+        var ui1 = careyeplay.ui(0);
         if (self.issilence) {
           ui1.muted(true);
           self.issilence = false;
@@ -1199,7 +1207,7 @@ export default {
         if (self.playingType != 1) {//设备
           self.playBackControl(6, self.playerchannelgbId);
         }else{//服务器
-          let video = playease.ui(0).element();
+          let video = careyeplay.ui(0).element();
           let rate = 1;
           if (!self.fFstate||self.fFstate == 100) {
             rate = 0.5;
@@ -1217,7 +1225,7 @@ export default {
         if (self.playingType != 1) {//设备
           self.playBackControl(7, self.playerchannelgbId);
         }else{//服务器
-          let video = playease.ui(0).element();
+          let video = careyeplay.ui(0).element();
           let rate = 1;
           if (!self.fFstate||self.fFstate == 100) {
             rate = 2;
@@ -1234,7 +1242,7 @@ export default {
       }
     },
     changemute(index) {//拖动---音量
-      var ui1 = playease.ui(0);
+      var ui1 = careyeplay.ui(0);
       if (index === 0) {
         ui1.muted(true);
         this.issilence = true;
@@ -1269,7 +1277,7 @@ export default {
           cmd: 4,
           param: index,
         }).then((ret) => {
-          let ui1 = playease.ui(0);
+          let ui1 = careyeplay.ui(0);
           let time = parseInt(ui1.element().currentTime);
           if(time>index){//时间往前拖-左
             setTimeout(function(){
@@ -1306,7 +1314,7 @@ export default {
           self.dragWaitting = false;
         });
       } else {
-        var ui1 = playease.ui(0);
+        var ui1 = careyeplay.ui(0);
         ui1.seek(Number(index));
       }
     },
@@ -1320,7 +1328,7 @@ export default {
     toStop(callbackF) {//停止
       var self = this;
       if (self.isplay) {
-        var ui1 = playease.ui(0);
+        var ui1 = careyeplay.ui(0);
         clearInterval(self.timer);
         $("#playerTextName").html("");
         $("#playerTextTime").html("<p style='color: #000000;font-size: 1vh;margin-top: -1%;'>0/0</p>");
@@ -1394,7 +1402,7 @@ export default {
       }
     },
     flv_screenshot(i) {
-      var api = playease(i);
+      var api = careyeplay(i);
       var video = api.element();
       var scale = 1;
       var canvas = document.createElement("canvas");

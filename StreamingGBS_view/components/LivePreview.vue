@@ -72,6 +72,7 @@
           </li>
           <li class="btnmenuli" @click="stopAll" v-else>
             <img class="btnmenulist" src="../assets/images/closebtn.png"/>
+            <div class="text">关闭</div>
             <div class="btnmenuli-tip tostop">关闭所有视频</div>
           </li>
         </ul>
@@ -249,7 +250,7 @@
         ]),
         playerrestart(fileurl, playerid, val, isrestart) {//初始化播放器
           var container = document.getElementById(playerid);
-          var ui = playease.ui(val);
+          var ui = careyeplay.ui(val);
           if(!isrestart){
             this.terminals.push({
               index: val,
@@ -258,10 +259,10 @@
           }
           ui.setup(container, {
             autoplay: false,
-            bufferLength: 0,//0.5,       // sec.
             // level: 'error',    // debug, log, warn, error
             file: fileurl,
             lowlatency: true,//false为服务器的点播功能
+            bufferLength: 0,//0.5,       // sec.
             maxBufferLength: 1.5,    // sec.
             maxRetries: 0,
             mode: "live", //live
@@ -331,6 +332,67 @@
             console.log(res)
             that.currentStopIndex = res.api;
           });
+          
+          ui.removeEventListener('statsupdate');
+          let lastTimestampType = "";//当播放器状态改变时，时间戳要重新计算。主要用在waiting和seeking处
+          let timestampSend = 0;//计算toReSendApiTime的时间戳
+          let toReSendApiTime = 10;//播放器waiting状态n秒后重新发送播放请求
+          let reloadingMax = 50;//播放器连续拉流次数，超过后不再重复请求接口拉流了
+          let refreshT = 2;//refreshT秒刷一次播放速度
+          let timestamp = 0;//计算refreshT的时间戳
+          let totalBytesReceived = 0;//总字节数
+          ui.addEventListener("statsupdate", function(stats){
+            let time = new Date().getTime();
+            if(!!stats.target.state()){
+              if(!timestampSend){//设置上一个时间戳，会结合当前时间戳进行计算
+                timestampSend = time;
+              }
+              if(lastTimestampType!=stats.target.state()&&stats.target.state()=="playing"){
+                // console.log("播放器恢复了播放了-----------",val);
+                lastTimestampType = stats.target.state();
+                // that.removeWaitingImg(val);
+              }
+              if(stats.target.state()=="waiting"||stats.target.state()=="seeking"){
+                if(!lastTimestampType){//记录上一次的播放器状态
+                  lastTimestampType = stats.target.state();
+                }
+                if(lastTimestampType==stats.target.state()){//停在waiting或者seeking状态了
+                  if((time-timestampSend)>toReSendApiTime*1000&&reloadingMax>=0){//播放器waiting状态n秒后重新发送播放请求
+                    if(reloadingMax==0){
+                      //doing stop
+                      that.stopPlayApi(val);
+                    }else{
+                      // console.log("播放器reload+++++++++++++++++++",val);
+                      // that.setWaitingImg(val);
+                      // ui.reload();
+                      timestampSend = time;
+                      reloadingMax--;
+                    }
+                  }
+                }else{
+                  lastTimestampType = stats.target.state();
+                  timestampSend = time;
+                }
+              }else if(stats.target.state()!="error"&&stats.target.state()!="ended"){
+                timestampSend = time;
+                reloadingMax = 50;
+              }
+            }
+            // console.log("接收的总字节数==",stats.data.stats);
+            if(!!stats.data.stats&&stats.data.stats.BytesReceivedPerSecond){
+              $("#player" + val).find("#speed"+val).text((stats.data.stats.BytesReceivedPerSecond/1024).toFixed(2)+"K/S");
+            }else if(!!stats.data.stats.BytesReceived){
+              // console.log("接收的总字节数==",stats.data.stats.BytesReceived);
+              if((time-timestamp)>refreshT*1000){//refreshT秒刷一次速度
+                let speed = (stats.data.stats.BytesReceived-totalBytesReceived)/(time-timestamp);
+                totalBytesReceived = stats.data.stats.BytesReceived;
+                timestamp = time;
+                if(speed>0){
+                  $("#player" + val).find("#speed"+val).text(speed.toFixed(2)+"K/S");
+                }
+              }
+            }
+          });
         },
         setPlayerLength(playerNum) {//布局分屏
           if (this.isMobile()) {
@@ -372,11 +434,6 @@
               $("#player" + i).attr("class", "col-smxx-8 listerclick");
               $("#player" + i).css("height", "12.5%");
             }
-            $("#player" + i).find("div.pe-poster").css("height", "20%");
-            $("#player" + i).find("div.pe-poster").css("margin-top", "22%");
-            $("#player" + i).find("div.pe-poster").css("width", "15%");
-            $("#player" + i).find("div.pe-poster").css("margin-left", "42%");
-            $("#player" + i).find("div.pe-poster").css("vertical-align", "middle");
           }
           for (let i = playerNum; i < 64; i++) {
             $("#player" + i).css("display", "none");
@@ -449,6 +506,38 @@
             }
             that.clickScreen(parseInt(e.currentTarget.id.split("player")[1]));
           });
+        },
+        setWaitingImg(val){//设置等待中的图片
+          if(!document.getElementById("img_"+val)){
+            var api = careyeplay(val);
+            var video = api.element();
+            var scale = 1;
+            var canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth * scale;
+            canvas.height = video.videoHeight * scale;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            var img = document.createElement("img");
+            img.crossOrigin = 'anonymous';
+            img.src = canvas.toDataURL("image/png");
+            img.id="img_"+val;
+            img.className="waitingImg";
+            let theId = "player"+val;
+            img.onload = function(){
+              let list = document.getElementById(theId).childNodes;
+              for (let i = 0; i < list.length; i++) {
+                if(list[i].className.indexOf("pe-ui-classic")>-1){
+                  list[i].appendChild(img);
+                  break;
+                }
+              }
+            }
+          }
+        },
+        removeWaitingImg(val){//移除等待中的图片
+          setTimeout(function(){
+            let img = document.getElementById("img_"+val);
+            if(!!img)img.remove();
+          },500);
         },
         downloadF({url,filename}){
           /**
@@ -595,13 +684,13 @@
                         url = data.data.WebSocket;
                       }
                       self.terminals[screenIdx].streamid = data.data.StreamID;
-                      let ui2 = playease.ui(self.terminals[screenIdx].index);
+                      let ui2 = careyeplay.ui(self.terminals[screenIdx].index);
                       ui2.stop();
                       setTimeout(function(){
                         ui2.play(url);
                       },1000);
                       $("#player" + self.terminals[screenIdx].index).find("div#souga").remove();
-                      let souga = "<div id='souga' style='position: absolute; left:10px;color:#FFFFFF;top: 50%;font-size: 1vh;width: auto;'>" + self.terminals[screenIdx].channelname + "</div>";
+                      let souga = "<div id='souga' class='play-title-my'>" + self.terminals[screenIdx].channelname + "<span class='thespeed' id='speed"+self.terminals[screenIdx].index+"'></span></div>";
                       $("#player" + self.terminals[screenIdx].index).find("div.pe-controlbar").append(souga);
                       if(!self.keepSiv){//保持登录
                         let keepIn = self.$store.state.keepTime;
@@ -697,13 +786,13 @@
               }
               self.contextMenuVisible = false;
               self.terminals[screenIdx].streamid = ret.data.StreamID;
-              let ui2 = playease.ui(self.terminals[screenIdx].index);
+              let ui2 = careyeplay.ui(self.terminals[screenIdx].index);
               ui2.stop();
               setTimeout(function(){
                 ui2.play(url);
               },1000);
               $("#player" + self.terminals[screenIdx].index).find("div#souga").remove();
-              let souga = "<div id='souga' style='position: absolute; left:10px;color:#FFFFFF;top: 50%;font-size: 1vh;width: auto;'>" + self.terminals[screenIdx].channelname + "</div>";
+              let souga = "<div id='souga' class='play-title-my'>" + self.terminals[screenIdx].channelname + "<span class='thespeed' id='speed"+self.terminals[screenIdx].index+"'></span></div>";
               $("#player" + self.terminals[screenIdx].index).find("div.pe-controlbar").append(souga);
               if(!self.keepSiv){//保持登录
                 let keepIn = self.$store.state.keepTime;
@@ -720,6 +809,7 @@
         stopPlayApi(index){//调用停止播放接口
           let that = this;
           $("#player" + that.terminals[index].index).find("div#souga").remove();
+          that.removeWaitingImg(index);
           // $.get(that.$store.state.baseUrl + "/playControl", {//目前停止播放接口有问题
           //   d_gb_id: that.terminals[index].d_gb_id,
           //   gb_id: that.terminals[index].gb_id,
@@ -731,15 +821,10 @@
           };
           that.terminals[index] = temp;
           that.yuntaiCtrData = {};
-          let ui = playease.ui(temp.index);
+          let ui = careyeplay.ui(temp.index);
           ui.destroy();
           that.playerrestart("",temp.boxId,temp.index,true);
           $("#" + temp.boxId).find("div.pe-logo").remove();
-          $("#" + temp.boxId).find("div.pe-poster").css("height", "20%");
-          $("#" + temp.boxId).find("div.pe-poster").css("margin-top", "22%");
-          $("#" + temp.boxId).find("div.pe-poster").css("width", "15%");
-          $("#" + temp.boxId).find("div.pe-poster").css("margin-left", "42%");
-          $("#" + temp.boxId).find("div.pe-poster").css("vertical-align", "middle");
           that.initPlayerEvent();
         },
         stopAll() {//停止全部
@@ -750,7 +835,7 @@
           }
           for (let i = 0; i < self.terminals.length; i++) {
             if(!!self.terminals[i].gb_id){
-              playease.ui(self.terminals[i].index).stop();
+              careyeplay.ui(self.terminals[i].index).stop();
               self.stopPlayApi(self.terminals[i].index);
             }
           }
@@ -1021,6 +1106,12 @@
         padding-right: 1%;
         cursor: pointer;
         position: relative;
+    }
+    .btnmenuli .text{
+      font-size: 12px;
+      color:#ff3434;
+      display: inline-block;
+      vertical-align: middle;
     }
     .btnmenuli-tip{
       position: absolute;
